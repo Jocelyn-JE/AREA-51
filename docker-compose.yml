@@ -48,18 +48,6 @@ services:
       - .env
     networks:
       - backend
-  swagger-ui:
-    image: docker.swagger.io/swaggerapi/swagger-ui
-    container_name: swagger-ui
-    restart: always
-    ports:
-      - 8080:8080
-    environment:
-      SWAGGER_JSON: /docs/apidoc.yaml
-    volumes:
-      - ./doc/swagger.yaml:/docs/apidoc.yaml
-    networks:
-      - backend
 
 networks:
   frontend:
