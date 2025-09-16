@@ -12,6 +12,15 @@ env:
   MIRROR_URL: 'git@github.com:{{ env.REPO_NAME }}'
 
 jobs:
+  check_if_mirror:
+    runs-on: ubuntu-latest
+    if: github.repository == '{{ env.REPO_NAME }}'
+    steps:
+      - name: "Abort"
+        run: |
+          echo "This is the main repository. Aborting."
+          exit 1
+
   # angular_build:
   #   i f: github.repository != '{{ env.REPO_NAME }}'
   #   name: "Build Angular project"
