@@ -14,12 +14,13 @@ env:
 jobs:
   check_if_mirror:
     runs-on: ubuntu-latest
-    if: github.repository == '{{ env.REPO_NAME }}'
+    if: github.repository != '{{ env.REPO_NAME }}'
     steps:
-      - name: "Abort"
+      - name: "Validate"
         run: |
-          echo "This is the main repository. Aborting."
-          exit 1
+          echo "This is not the main repository. Proceeding with mirroring."
+          echo "REPO_NAME={{ env.REPO_NAME }}"
+          echo "MIRROR_URL={{ env.MIRROR_URL }}"
 
   # angular_build:
   #   i f: github.repository != '{{ env.REPO_NAME }}'
@@ -43,7 +44,7 @@ jobs:
   #       working-directory: front
 
   push_to_mirror:
-    # needs: angular_build
+    needs: check_if_mirror
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' }}
     steps:
