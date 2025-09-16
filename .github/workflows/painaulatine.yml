@@ -1,0 +1,51 @@
+name: Painaulatine
+on:
+  push:
+    branches-ignore:
+      - 'ga-ignore-**'
+  pull_request:
+    branches-ignore:
+      - 'ga-ignore-**'
+
+env:
+  REPO_NAME: 'EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-9'
+  MIRROR_URL: 'git@github.com:{{ env.REPO_NAME }}'
+
+jobs:
+  # angular_build:
+  #   i f: github.repository != '{{ env.REPO_NAME }}'
+  #   name: "Build Angular project"
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+
+  #     - name: Install dependencies
+  #       run: npm ci
+  #       working-directory: front
+
+  #     - name: Build Angular
+  #       run: npm run build --if-present
+  #       working-directory: front
+
+  push_to_mirror:
+    # needs: angular_build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: "Mirroring"
+        uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url:
+            ${{ env.MIRROR_URL }}
+          ssh_private_key:
+            ${{ secrets.GIT_SSH_PRIVATE_KEY }}
