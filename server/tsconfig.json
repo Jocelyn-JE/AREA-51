@@ -1,0 +1,15 @@
+{
+    "extends": "./node_modules/@tsconfig/node16/tsconfig.json",
+    "compilerOptions": {
+        "moduleResolution": "Node16",
+        "target": "es6",
+        "module": "Node16",
+        "outDir": "./dist",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    },
+    "include": ["**/*.ts"],
+    "exclude": ["node_modules"]
+}

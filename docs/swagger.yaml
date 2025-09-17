@@ -1,0 +1,26 @@
+openapi: 3.1.0
+info:
+  title: AREA-51 API
+  version: 1.0.0
+  description: API documentation for AREA project
+paths:
+  /about.json:
+    get:
+      summary: Get project metadata
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: AREA-51
+                  version:
+                    type: string
+                    example: 1.0.0
+                  description:
+                    type: string
+                    example: API for AREA project metadata
