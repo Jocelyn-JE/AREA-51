@@ -34,7 +34,7 @@ function App() {
   if (!data) return <p>Loading…</p>;
 
   return (
-    <div style= {{
+    <div style={{
       display: "grid",
       justifyContent: "center",
       alignItems: "center",
