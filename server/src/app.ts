@@ -38,11 +38,11 @@ async function run() {
             console.log("Goodbye!");
             process.exit(0);
         });
-        while (true) {
+        setInterval(() => {
             // Polling logic for background tasks can be added here
             // Like checking for updates on external services for actions
             // and firing the reactions accordingly
-        }
+        }, 5000); // Poll every 5 seconds (adjust as needed)
     } catch (err) {
         console.log("Error occurred: ", err);
         await closeDbConnection();
