@@ -1,11 +1,13 @@
 import express from "express";
 import { db } from "../mongodb";
+import { ObjectId } from "mongodb";
 
 type ClientInfo = {
     host: string;
 };
 
 type Service = {
+    _id: ObjectId;
     name: string;
     actions: { name: string; description: string }[];
     reactions: { name: string; description: string }[];
