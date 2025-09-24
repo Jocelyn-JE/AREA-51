@@ -1,15 +1,19 @@
 import { MongoClient, Db } from "mongodb";
+import dotenv from "dotenv";
+import dotenvExpand from "dotenv-expand";
 
-const dbClient = new MongoClient(
-    process.env.DB_URL || "mongodb://localhost:27017"
-);
-const db: Db = dbClient.db(process.env.MONGO_DB || "database");
+dotenvExpand.expand(dotenv.config());
+
+const dbUrl = process.env.DB_URL || "mongodb://localhost:27017";
+const dbName = process.env.MONGO_DB || "database";
+const dbClient = new MongoClient(dbUrl);
+const db: Db = dbClient.db(dbName);
 
 async function connectToDb(): Promise<boolean> {
-    console.log("Connecting to DB...");
+    console.log(`Connecting to DB... at ${dbUrl}`);
     try {
         await dbClient.connect();
-        console.log("DB connected");
+        console.log(`DB connected, active on database: ${dbName}`);
         return true;
     } catch (err: any) {
         console.log(`DB connection error: ${err.message}`);
