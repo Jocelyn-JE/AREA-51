@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 // Documentation route
 app.use("/api-docs", swaggerRouter);
 // Info route
-app.use("/about.json", aboutRouter);
+app.get("/about.json", aboutRouter);
 
 app.listen(port, () => {
     console.log(`Backend listening on port ${port}`);
