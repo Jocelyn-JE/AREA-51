@@ -13,3 +13,15 @@ usersCollection.insertOne({
     name: "Administrator"
 });
 usersCollection.createIndex({ email: 1 }, { unique: true });
+
+const servicesCollection = db.services;
+servicesCollection.insertOne({
+    name: "example_service",
+    actions: [
+        { id: 1, name: "example_action", description: "An example action" }
+    ],
+    reactions: [
+        { id: 1, name: "example_reaction", description: "An example reaction" }
+    ]
+});
+servicesCollection.createIndex({ name: 1 }, { unique: true });
