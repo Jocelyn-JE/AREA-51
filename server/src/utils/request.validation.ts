@@ -57,7 +57,7 @@ export function checkAllowedFields(
 
 // Check if any of the provided fields are empty or contain only whitespace
 export function isEmpty(...fields: string[]): boolean {
-    return fields.every((field) => !field || field.trim() === "");
+    return fields.some((field) => !field || field.trim() === "");
 }
 
 // Simple email format validation
