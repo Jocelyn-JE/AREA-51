@@ -38,6 +38,9 @@ paths:
                   type: string
                   example: user123@example.com
                   format: email
+                username:
+                  type: string
+                  example: user123
                 password:
                   type: string
                   example: pass123
