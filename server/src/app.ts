@@ -20,6 +20,7 @@ app.get("/", (req, res) => {
 
 // Documentation route
 app.use("/api-docs", swaggerRouter);
+console.log(`Swagger docs available at http://localhost:${port}/api-docs`);
 // Info route
 app.get("/about.json", aboutRouter);
 // Register route

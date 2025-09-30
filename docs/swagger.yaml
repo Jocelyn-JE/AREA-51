@@ -24,3 +24,102 @@ paths:
                   description:
                     type: string
                     example: API for AREA project metadata
+  /api/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user123@example.com
+                  format: email
+                password:
+                  type: string
+                  example: pass123
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  userID:
+                    $ref: '#/components/schemas/ObjectId'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '500':
+          $ref: '#/components/responses/Error500'
+
+components:
+  schemas:
+    ObjectId:
+      type: string
+      format: objectid
+      pattern: '^[0-9a-fA-F]{24}$'
+      description: |
+        MongoDB ObjectID - A 12-byte identifier consisting of:
+        - 4-byte timestamp (seconds since Unix epoch)
+        - 5-byte random value (unique per machine/process)
+        - 3-byte incrementing counter (per process, initialized randomly)
+        
+        Represented as a 24-character hexadecimal string.
+      example: "507f1f77bcf86cd799439011"
+      minLength: 24
+      maxLength: 24
+    ErrorResponse:
+      type: object
+      description: Standard error payload
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Human readable error description
+          example: Error XXX because of YYY
+  responses:
+    Error400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error404:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error409:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
