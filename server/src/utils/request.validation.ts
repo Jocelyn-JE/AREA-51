@@ -18,7 +18,7 @@ export function validateJSONRequest(req: Request, res: Response) {
     return null;
 }
 
-export function checkRequiredFields(
+export function checkExactFields(
     body: any,
     res: Response,
     requiredFields: string[]
@@ -30,6 +30,22 @@ export function checkRequiredFields(
         return res.status(400).json({
             message:
                 "Request body must contain exactly the required fields: " +
+                requiredFields.join(", ")
+        });
+    return null;
+}
+
+export function checkRequiredFields(
+    body: any,
+    res: Response,
+    requiredFields: string[]
+) {
+    console.debug(`Checking required fields: ${requiredFields.join(", ")}`);
+    const bodyKeys = Object.keys(body).sort();
+    if (requiredFields.some((field) => !bodyKeys.includes(field)))
+        return res.status(400).json({
+            message:
+                "Request body must contain the required fields: " +
                 requiredFields.join(", ")
         });
     return null;
@@ -50,14 +66,30 @@ export function checkAllowedFields(
         });
     if (bodyKeys.length === 0)
         return res.status(400).json({
-            message: "Request body must contain at least one field to update."
+            message: "Request body must contain at least one field."
+        });
+    return null;
+}
+
+export function checkOneOfFields(body: any, res: Response, fields: string[]) {
+    console.debug(`Checking at least one of fields: ${fields.join(", ")}`);
+    const bodyKeys = Object.keys(body).sort();
+    if (fields.every((field) => !bodyKeys.includes(field)))
+        return res.status(400).json({
+            message:
+                "Request body must contain at least one of the fields: " +
+                fields.join(", ")
         });
     return null;
 }
 
 // Check if any of the provided fields are empty or contain only whitespace
-export function isEmpty(...fields: string[]): boolean {
+export function areSomeEmpty(...fields: string[]): boolean {
     return fields.some((field) => !field || field.trim() === "");
+}
+
+export function areAllEmpty(...fields: string[]): boolean {
+    return fields.every((field) => !field || field.trim() === "");
 }
 
 // Simple email format validation

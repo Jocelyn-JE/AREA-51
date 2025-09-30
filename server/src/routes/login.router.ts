@@ -2,9 +2,12 @@ import express from "express";
 import { db } from "../mongodb";
 import {
     validateJSONRequest,
-    checkRequiredFields,
     isValidEmail,
-    isEmpty
+    areSomeEmpty,
+    checkRequiredFields,
+    checkOneOfFields,
+    checkAllowedFields,
+    areAllEmpty
 } from "../utils/request.validation";
 import { generateToken } from "../utils/jwt";
 import bcrypt from "bcrypt";
@@ -15,20 +18,27 @@ const router = express.Router();
 router.post("/", async (req, res) => {
     if (
         validateJSONRequest(req, res) ||
-        checkRequiredFields(req.body, res, ["email", "password"])
+        checkRequiredFields(req.body, res, ["password"]) ||
+        checkOneOfFields(req.body, res, ["email", "username"]) ||
+        checkAllowedFields(req.body, res, ["email", "username", "password"])
     )
         return;
-    const { email, password } = req.body as User;
+    var { email, username, password } = req.body;
+    if (areSomeEmpty(password) || areAllEmpty(email, username))
+        return res.status(400).json({ error: "Password cannot be empty" });
+    email = email.toLowerCase().trim();
+    username = username.trim();
     if (!isValidEmail(email))
         return res.status(400).json({ error: "Invalid email format" });
-    if (isEmpty(email, password))
-        return res
-            .status(400)
-            .json({ error: "Email and password cannot be empty" });
     try {
-        const user = await db.collection<User>("users").findOne({ email });
+        const searchFilter = email
+            ? { email: email.toLowerCase().trim() }
+            : { username: username!.trim() };
+        const user = await db.collection<User>("users").findOne(searchFilter);
         if (!user || !(await comparePassword(password, user.password)))
-            return res.status(401).json({ error: "Invalid email or password" });
+            return res
+                .status(401)
+                .json({ error: "Invalid email, username, or password" });
         const token = generateToken(user._id);
         res.status(200).json({ message: "Login successful", token });
     } catch (error) {

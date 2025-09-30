@@ -2,15 +2,14 @@ import express from "express";
 import { db } from "../mongodb";
 import {
     validateJSONRequest,
-    checkRequiredFields,
+    checkExactFields,
     isValidEmail,
-    isEmpty
+    areSomeEmpty
 } from "../utils/request.validation";
 import bcrypt from "bcrypt";
 import { ObjectId } from "mongodb";
 
 const router = express.Router();
-const requiredFields = ["email", "username", "password"];
 
 export type User = {
     _id?: ObjectId;
@@ -23,7 +22,7 @@ export type User = {
 router.post("/", async (req, res) => {
     if (
         validateJSONRequest(req, res) ||
-        checkRequiredFields(req.body, res, requiredFields)
+        checkExactFields(req.body, res, ["email", "username", "password"])
     )
         return;
     var { email, password, username } = req.body as User;
@@ -31,7 +30,7 @@ router.post("/", async (req, res) => {
     username = username.trim();
     if (!isValidEmail(email))
         return res.status(400).json({ error: "Invalid email format" });
-    if (isEmpty(email, password, username))
+    if (areSomeEmpty(email, password, username))
         return res
             .status(400)
             .json({ error: "Email, password, and username cannot be empty" });
