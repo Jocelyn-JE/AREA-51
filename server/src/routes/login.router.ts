@@ -5,9 +5,9 @@ import {
     isValidEmail,
     areSomeEmpty,
     checkRequiredFields,
-    checkOneOfFields,
     checkAllowedFields,
-    areAllEmpty
+    areAllEmpty,
+    checkExactlyOneOfFields
 } from "../utils/request.validation";
 import { generateToken } from "../utils/jwt";
 import bcrypt from "bcrypt";
@@ -19,22 +19,26 @@ router.post("/", async (req, res) => {
     if (
         validateJSONRequest(req, res) ||
         checkRequiredFields(req.body, res, ["password"]) ||
-        checkOneOfFields(req.body, res, ["email", "username"]) ||
+        checkExactlyOneOfFields(req.body, res, ["email", "username"]) ||
         checkAllowedFields(req.body, res, ["email", "username", "password"])
     )
         return;
-    var { email, username, password } = req.body;
-    if (areSomeEmpty(password) || areAllEmpty(email, username))
+    const { email: rawEmail, username: rawUsername, password } = req.body;
+    if (areSomeEmpty(password) || areAllEmpty(rawEmail, rawUsername))
         return res.status(400).json({ error: "Password cannot be empty" });
-    email = email.toLowerCase().trim();
-    username = username.trim();
-    if (!isValidEmail(email))
+
+    let email = "";
+    let username = "";
+
+    if (rawEmail) email = rawEmail.toLowerCase().trim();
+    if (rawUsername) username = rawUsername.trim();
+    if (email && !isValidEmail(email))
         return res.status(400).json({ error: "Invalid email format" });
     try {
-        const searchFilter = email
-            ? { email: email.toLowerCase().trim() }
-            : { username: username!.trim() };
-        const user = await db.collection<User>("users").findOne(searchFilter);
+        const user =
+            email !== ""
+                ? await emailSearch(email)
+                : await usernameSearch(username);
         if (!user || !(await comparePassword(password, user.password)))
             return res
                 .status(401)
@@ -46,6 +50,14 @@ router.post("/", async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 });
+
+async function usernameSearch(username: string) {
+    return await db.collection<User>("users").findOne({ username: username });
+}
+
+async function emailSearch(email: string) {
+    return await db.collection<User>("users").findOne({ email: email });
+}
 
 function comparePassword(
     plainPassword: string,
