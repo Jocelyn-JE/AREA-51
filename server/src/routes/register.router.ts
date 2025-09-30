@@ -7,13 +7,13 @@ import {
     isEmpty
 } from "../utils/request.validation";
 import bcrypt from "bcrypt";
-import { InsertOneResult } from "mongodb";
+import { ObjectId } from "mongodb";
 
 const router = express.Router();
 const requiredFields = ["email", "username", "password"];
 
-type User = {
-    _id?: string;
+export type User = {
+    _id?: ObjectId;
     email: string;
     password: string;
     username: string;
@@ -40,14 +40,12 @@ router.post("/", async (req, res) => {
     if (await isUsernameInUse(username))
         return res.status(409).json({ error: "Username is already in use" });
     try {
-        const result: InsertOneResult<User> = await db
-            .collection("users")
-            .insertOne({
-                email,
-                password: await hashPassword(password),
-                username,
-                role: "user"
-            });
+        const result = await db.collection<User>("users").insertOne({
+            email,
+            password: await hashPassword(password),
+            username,
+            role: "user"
+        });
         res.status(201).json({
             message: "User registered successfully",
             userID: result.insertedId

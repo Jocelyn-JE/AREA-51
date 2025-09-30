@@ -1,11 +1,12 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
+import { ObjectId } from "mongodb";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 const JWT_EXPIRES_IN = 3600000; // Token expiration time in ms
 
 interface JwtPayload {
-    userId: string;
+    userId: ObjectId;
     expiresAt: number;
 }
 
@@ -15,7 +16,7 @@ interface JwtPayload {
  * @param userId - The user ID to include in the JWT payload.
  * @returns The generated JWT as a string.
  */
-export function generateToken(userId: string): string {
+export function generateToken(userId: ObjectId): string {
     const payload: JwtPayload = {
         userId,
         expiresAt: Date.now() + JWT_EXPIRES_IN
@@ -36,7 +37,7 @@ function verifyTokenInternal(token: string): JwtPayload | null {
 declare global {
     namespace Express {
         interface Request {
-            userId?: string;
+            userId?: ObjectId;
         }
     }
 }
