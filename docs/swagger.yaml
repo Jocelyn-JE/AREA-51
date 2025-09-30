@@ -7,6 +7,7 @@ paths:
   /about.json:
     get:
       summary: Get project metadata
+      description: Returns metadata about the AREA project including name, version, description and available services.
       responses:
         '200':
           description: Successful response
@@ -27,6 +28,7 @@ paths:
   /api/register:
     post:
       summary: Register a new user
+      description: Register a new user with email, username, and password. Returns the created user's ID upon successful registration.
       requestBody:
         required: true
         content:
@@ -62,6 +64,55 @@ paths:
           $ref: '#/components/responses/Error409'
         '500':
           $ref: '#/components/responses/Error500'
+  /api/login:
+    post:
+      summary: Login a user
+      description: Login using either email or username along with password. Returns a JWT token valid for 1 hour upon successful authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: Provide either email or username with password (not both).
+              oneOf:
+                - type: object
+                  required: [email, password]
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                      example: user123@example.com
+                    password:
+                      type: string
+                      example: pass123
+                - type: object
+                  required: [username, password]
+                  properties:
+                    username:
+                      type: string
+                      example: user123
+                    password:
+                      type: string
+                      example: pass123
+      responses:
+        '200':
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+                  token:
+                    $ref: '#/components/schemas/JWT'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
 
 components:
   schemas:
@@ -79,6 +130,12 @@ components:
       example: "507f1f77bcf86cd799439011"
       minLength: 24
       maxLength: 24
+    JWT:
+      type: string
+      format: jwt
+      pattern: '^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$'
+      description: JSON Web Token for authentication
+      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1MDdmMWY3N2JjZjg2Y2Q3OTk0MzkwMTEiLCJpYXQiOjE2MTYyMzkwMjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
     ErrorResponse:
       type: object
       description: Standard error payload
