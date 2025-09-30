@@ -34,6 +34,7 @@ function verifyTokenInternal(token: string): JwtPayload | null {
     }
 }
 
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
     namespace Express {
         interface Request {
@@ -41,6 +42,7 @@ declare global {
         }
     }
 }
+/* eslint-enable @typescript-eslint/no-namespace */
 
 /**
  * Express middleware that validates a Bearer JWT from the Authorization header.
