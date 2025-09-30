@@ -19,7 +19,7 @@ export function validateJSONRequest(req: Request, res: Response) {
 }
 
 export function checkExactFields(
-    body: any,
+    body: Record<string, unknown>,
     res: Response,
     requiredFields: string[]
 ) {
@@ -36,7 +36,7 @@ export function checkExactFields(
 }
 
 export function checkRequiredFields(
-    body: any,
+    body: Record<string, unknown>,
     res: Response,
     requiredFields: string[]
 ) {
@@ -52,7 +52,7 @@ export function checkRequiredFields(
 }
 
 export function checkAllowedFields(
-    body: any,
+    body: Record<string, unknown>,
     res: Response,
     allowedFields: string[]
 ) {
@@ -71,13 +71,35 @@ export function checkAllowedFields(
     return null;
 }
 
-export function checkOneOfFields(body: any, res: Response, fields: string[]) {
+export function checkOneOfFields(
+    body: Record<string, unknown>,
+    res: Response,
+    fields: string[]
+) {
     console.debug(`Checking at least one of fields: ${fields.join(", ")}`);
     const bodyKeys = Object.keys(body).sort();
     if (fields.every((field) => !bodyKeys.includes(field)))
         return res.status(400).json({
             message:
                 "Request body must contain at least one of the fields: " +
+                fields.join(", ")
+        });
+    return null;
+}
+
+export function checkExactlyOneOfFields(
+    body: Record<string, unknown>,
+    res: Response,
+    fields: string[]
+) {
+    console.debug(`Checking exactly one of fields: ${fields.join(", ")}`);
+    const present = fields.filter((field) =>
+        Object.prototype.hasOwnProperty.call(body, field)
+    );
+    if (present.length !== 1)
+        return res.status(400).json({
+            message:
+                "Request body must contain exactly one of the fields: " +
                 fields.join(", ")
         });
     return null;
@@ -97,6 +119,7 @@ export function areAllEmpty(...fields: string[]): boolean {
 // Holy shit that's a long regex
 export function isValidEmail(email: string): boolean {
     const emailRegex =
+        // eslint-disable-next-line no-control-regex
         /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
     return emailRegex.test(email);
 }
