@@ -8,6 +8,7 @@ db.createUser({
 const usersCollection = db.users;
 usersCollection.insertOne({
     email: "admin@admin.com",
+    username: "admin",
     password: "$2a$10$n.TpGvHal2b7gopgn9AErOrMKKTBm.LalREe.SaZzRHMoyGOZYXGG",
     role: "admin"
 });

@@ -10,12 +10,13 @@ import bcrypt from "bcrypt";
 import { InsertOneResult } from "mongodb";
 
 const router = express.Router();
-const requiredFields = ["email", "password"];
+const requiredFields = ["email", "username", "password"];
 
 type User = {
     _id?: string;
     email: string;
     password: string;
+    username: string;
     role?: string;
 };
 
@@ -25,21 +26,26 @@ router.post("/", async (req, res) => {
         checkRequiredFields(req.body, res, requiredFields)
     )
         return;
-    const { email, password } = req.body as User;
+    var { email, password, username } = req.body as User;
+    email = email.toLowerCase().trim();
+    username = username.trim();
     if (!isValidEmail(email))
         return res.status(400).json({ error: "Invalid email format" });
-    if (isEmpty(email, password))
+    if (isEmpty(email, password, username))
         return res
             .status(400)
-            .json({ error: "Email and password cannot be empty" });
+            .json({ error: "Email, password, and username cannot be empty" });
     if (await isEmailInUse(email))
         return res.status(409).json({ error: "Email is already in use" });
+    if (await isUsernameInUse(username))
+        return res.status(409).json({ error: "Username is already in use" });
     try {
         const result: InsertOneResult<User> = await db
             .collection("users")
             .insertOne({
                 email,
                 password: await hashPassword(password),
+                username,
                 role: "user"
             });
         res.status(201).json({
@@ -61,6 +67,13 @@ async function isEmailInUse(email: string): Promise<boolean> {
     return db
         .collection("users")
         .findOne({ email })
+        .then((user) => !!user);
+}
+
+async function isUsernameInUse(username: string): Promise<boolean> {
+    return db
+        .collection("users")
+        .findOne({ username })
         .then((user) => !!user);
 }
 
