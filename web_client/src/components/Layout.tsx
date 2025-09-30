@@ -9,7 +9,7 @@ export default function Layout() {
                     AREA
                 </Link>
                 <nav className="flex gap-4">
-                    <Link to="/login" className="text-gray-600 hover:text-blue-600">
+                    <Link to="/login" className="text-gray-600 px-4 py-2 hover:text-blue-600">
                         Log in
                     </Link>
                     <Link to="/signup" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
