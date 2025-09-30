@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/Jocelyn-JE/AREA-51#readme",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "dotenv-expand": "^12.0.3",
@@ -29,11 +30,13 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/mongodb": "^4.0.6",
     "@types/node": "^24.5.0",
     "@types/swagger-ui-express": "^4.1.8",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "eslint": "^8.57.1",
     "prettier": "^3.6.2",
