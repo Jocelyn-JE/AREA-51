@@ -20,7 +20,7 @@ function Explore() {
             Get Started
           </a>
           <a
-            href="/services"
+            href="/explore"
             className="bg-gray-200 text-gray-800 px-6 py-3 rounded-xl hover:bg-gray-300"
           >
             Explore Services

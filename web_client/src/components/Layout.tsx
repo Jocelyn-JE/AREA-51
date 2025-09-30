@@ -19,7 +19,7 @@ export default function Layout() {
             </header>
 
             {/* Main content */}
-            <main className="flex flex-1 flex-col justify-center items-center text-center px-6">
+            <main className="flex-1 px-6">
                 <Outlet />
             </main>
 
