@@ -46,41 +46,36 @@ async function findOrCreateUser(
     googleId: string,
     res: express.Response
 ) {
-    try {
-        let user = (await db
-            .collection<User>("users")
-            .findOne({ email })) as User | null;
-        if (user) {
-            if (user.googleId !== googleId)
-                return res.status(403).json({
-                    error: "This email is already associated with another account"
-                });
-            if (!user._id) {
-                console.error("User found without _id:", user);
-                return res.status(500).json({ error: "Internal server error" });
-            }
-            // User exists and googleId matches, proceed to generate token
-            return res.status(200).json({
-                message: "Login successful",
-                userID: user._id,
-                token: generateToken(user._id)
+    let user = (await db
+        .collection<User>("users")
+        .findOne({ email })) as User | null;
+    if (user) {
+        if (user.googleId !== googleId)
+            return res.status(403).json({
+                error: "This email is already associated with another account"
             });
-        } else {
-            // User does not exist, create a new user
-            user = await createUser(email, name, googleId);
-            if (!user._id) {
-                console.error("Created user missing _id:", user);
-                return res.status(500).json({ error: "Internal server error" });
-            }
-            return res.status(201).json({
-                message: "User created successfully",
-                userID: user._id,
-                token: generateToken(user._id)
-            });
+        if (!user._id) {
+            console.error("User found without _id:", user);
+            return res.status(500).json({ error: "Internal server error" });
         }
-    } catch (error) {
-        console.error("Error accessing the database:", error);
-        throw new Error("Internal server error");
+        // User exists and googleId matches, proceed to generate token
+        return res.status(200).json({
+            message: "Login successful",
+            userID: user._id,
+            token: generateToken(user._id)
+        });
+    } else {
+        // User does not exist, create a new user
+        user = await createUser(email, name, googleId);
+        if (!user._id) {
+            console.error("Created user missing _id:", user);
+            return res.status(500).json({ error: "Internal server error" });
+        }
+        return res.status(201).json({
+            message: "User created successfully",
+            userID: user._id,
+            token: generateToken(user._id)
+        });
     }
 }
 
