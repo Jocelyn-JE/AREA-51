@@ -15,18 +15,18 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <GoogleOAuthProvider clientId={CLIENT_ID}>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          {/* Redirect `/` to `/explore` */}
-          <Route path="/" element={<Navigate to="/explore" replace />} />
-          <Route path="/explore" element={<Explore />} />
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            {/* Redirect `/` to `/explore` */}
+            <Route path="/" element={<Navigate to="/explore" replace />} />
+            <Route path="/explore" element={<Explore />} />
 
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          {/* fallback route */}
-          <Route path="*" element={<App />} />
-        </Route>
-      </Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            {/* fallback route */}
+            <Route path="*" element={<App />} />
+          </Route>
+        </Routes>
       </GoogleOAuthProvider>
     </BrowserRouter>
   </React.StrictMode>
