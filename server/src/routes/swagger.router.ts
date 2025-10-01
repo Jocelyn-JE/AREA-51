@@ -19,10 +19,24 @@ function getSwaggerConfigFile(): swaggerUi.JsonObject {
     return yaml.parse(file);
 }
 
+// Extend the Express Request interface
+declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
+    namespace Express {
+        interface Request {
+            swaggerDoc?: swaggerUi.JsonObject;
+        }
+    }
+}
+
 // Reloads and serves the swagger file on each request
 router.use(
     "/",
-    function (req: any, res: any, next: any) {
+    function (
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction
+    ) {
         if (req.path !== "/") return next();
         req.swaggerDoc = getSwaggerConfigFile();
         next();
