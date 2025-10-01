@@ -25,7 +25,7 @@ router.post("/", async (req, res) => {
         return;
     const { email: rawEmail, username: rawUsername, password } = req.body;
     if (areSomeEmpty(password) || areAllEmpty(rawEmail, rawUsername))
-        return res.status(400).json({ error: "Password cannot be empty" });
+        return res.status(400).json({ error: "Password cannot be empty and either email or username must be provided" });
 
     let email = "";
     let username = "";
