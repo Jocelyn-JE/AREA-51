@@ -5,6 +5,8 @@ import App from "./App";
 import Explore from "./pages/Explore";
 import Layout from "./components/Layout";
 import "./index.css";
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -14,6 +16,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           {/* Redirect `/` to `/explore` */}
           <Route path="/" element={<Navigate to="/explore" replace />} />
           <Route path="/explore" element={<Explore />} />
+
+          <Route path="/signup" element={<Signup />} />
           {/* fallback route */}
           <Route path="*" element={<App />} />
         </Route>
