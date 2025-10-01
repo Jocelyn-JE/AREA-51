@@ -50,7 +50,7 @@ const router = express.Router();
 const collection = db.collection("services");
 
 router.use("/", async (req, res) => {
-    let aboutInfo: AboutInfo = {
+    const aboutInfo: AboutInfo = {
         client: getClientInfo(req),
         server: await getServerInfo()
     };
