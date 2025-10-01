@@ -1,4 +1,3 @@
-import { OAuth2Client } from "google-auth-library";
 import express from "express";
 import { User } from "./register.router";
 import { db } from "../mongodb";
@@ -7,10 +6,7 @@ import {
     validateJSONRequest
 } from "../utils/request.validation";
 import { generateToken } from "../utils/jwt";
-
-const CLIENT_ID =
-    "210212748639-u6rbif83ca1uqkijrpc3iak87ajahrpd.apps.googleusercontent.com";
-export const googleClient = new OAuth2Client(CLIENT_ID);
+import { verifyGoogleToken } from "../utils/google.auth";
 
 const router = express.Router();
 
@@ -21,11 +17,7 @@ router.post("/google/verify", async (req, res) => {
     )
         return;
     const { token } = req.body;
-    const ticket = await googleClient.verifyIdToken({
-        idToken: token,
-        audience: CLIENT_ID
-    });
-    const payload = ticket.getPayload();
+    const payload = await verifyGoogleToken(token);
     if (!payload) return res.status(401).json({ error: "Invalid token" });
     const email = payload.email; // user's email
     const name = payload.name; // user's full name
