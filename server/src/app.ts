@@ -6,6 +6,7 @@ import { connectToDb, closeDbConnection } from "./mongodb";
 import swaggerRouter from "./routes/swagger.router";
 import aboutRouter from "./routes/about.router";
 import registerRouter from "./routes/register.router";
+import loginRouter from "./routes/login.router";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -25,6 +26,8 @@ console.log(`Swagger docs available at http://localhost:${port}/api-docs`);
 app.get("/about.json", aboutRouter);
 // Register route
 app.use("/api/register", registerRouter);
+// Login route
+app.use("/api/login", loginRouter);
 
 app.listen(port, () => {
     console.log(`Backend listening on port ${port}`);

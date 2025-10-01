@@ -1,4 +1,4 @@
-export default {
+module.exports = {
     extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
     root: true,
     parser: "@typescript-eslint/parser",
@@ -7,6 +7,7 @@ export default {
         tsconfigRootDir: __dirname
     },
     plugins: ["@typescript-eslint"],
+    ignorePatterns: [".eslintrc.js"],
     rules: {
         indent: ["error", 4],
         "@typescript-eslint/indent": ["error", 4]

@@ -2,18 +2,17 @@ import express from "express";
 import { db } from "../mongodb";
 import {
     validateJSONRequest,
-    checkRequiredFields,
+    checkExactFields,
     isValidEmail,
-    isEmpty
+    areSomeEmpty
 } from "../utils/request.validation";
 import bcrypt from "bcrypt";
-import { InsertOneResult } from "mongodb";
+import { ObjectId } from "mongodb";
 
 const router = express.Router();
-const requiredFields = ["email", "username", "password"];
 
-type User = {
-    _id?: string;
+export type User = {
+    _id?: ObjectId;
     email: string;
     password: string;
     username: string;
@@ -23,7 +22,7 @@ type User = {
 router.post("/", async (req, res) => {
     if (
         validateJSONRequest(req, res) ||
-        checkRequiredFields(req.body, res, requiredFields)
+        checkExactFields(req.body, res, ["email", "username", "password"])
     )
         return;
     var { email, password, username } = req.body as User;
@@ -31,7 +30,7 @@ router.post("/", async (req, res) => {
     username = username.trim();
     if (!isValidEmail(email))
         return res.status(400).json({ error: "Invalid email format" });
-    if (isEmpty(email, password, username))
+    if (areSomeEmpty(email, password, username))
         return res
             .status(400)
             .json({ error: "Email, password, and username cannot be empty" });
@@ -40,14 +39,12 @@ router.post("/", async (req, res) => {
     if (await isUsernameInUse(username))
         return res.status(409).json({ error: "Username is already in use" });
     try {
-        const result: InsertOneResult<User> = await db
-            .collection("users")
-            .insertOne({
-                email,
-                password: await hashPassword(password),
-                username,
-                role: "user"
-            });
+        const result = await db.collection<User>("users").insertOne({
+            email,
+            password: await hashPassword(password),
+            username,
+            role: "user"
+        });
         res.status(201).json({
             message: "User registered successfully",
             userID: result.insertedId
