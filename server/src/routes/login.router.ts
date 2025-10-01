@@ -25,7 +25,9 @@ router.post("/", async (req, res) => {
         return;
     const { email: rawEmail, username: rawUsername, password } = req.body;
     if (areSomeEmpty(password) || areAllEmpty(rawEmail, rawUsername))
-        return res.status(400).json({ error: "Password cannot be empty and either email or username must be provided" });
+        return res.status(400).json({
+            error: "Password cannot be empty and either email or username must be provided"
+        });
 
     let email = "";
     let username = "";
@@ -39,10 +41,16 @@ router.post("/", async (req, res) => {
             email !== ""
                 ? await emailSearch(email)
                 : await usernameSearch(username);
-        if (!user || !(await comparePassword(password, user.password)))
+        if (!user)
             return res
                 .status(401)
-                .json({ error: "Invalid email, username, or password" });
+                .json({ error: "This account does not exist" });
+        if (user.password === null)
+            return res
+                .status(403)
+                .json({ error: "This account is linked to a Google account" });
+        if (!(await comparePassword(password, user.password)))
+            return res.status(401).json({ error: "Invalid password" });
         const token = generateToken(user._id);
         res.status(200).json({ message: "Login successful", token });
     } catch (error) {
