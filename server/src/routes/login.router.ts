@@ -37,10 +37,9 @@ router.post("/", async (req, res) => {
     if (email && !isValidEmail(email))
         return res.status(400).json({ error: "Invalid email format" });
     try {
-        const user =
-            email !== ""
-                ? await emailSearch(email)
-                : await usernameSearch(username);
+        const user = email
+            ? await emailSearch(email)
+            : await usernameSearch(username);
         if (!user)
             return res
                 .status(401)
