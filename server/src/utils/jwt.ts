@@ -24,10 +24,21 @@ export function generateToken(userId: ObjectId): string {
     return jwt.sign(payload, JWT_SECRET);
 }
 
+/**
+ * Checks if a string is a valid MongoDB ObjectId.
+ *
+ * @param id - The string to check.
+ * @returns True if the string is a valid ObjectId, false otherwise.
+ */
+export function isObjectId(id: string): boolean {
+    return ObjectId.isValid(id) && String(new ObjectId(id)) === id;
+}
+
 function verifyTokenInternal(token: string): JwtPayload | null {
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         if (typeof decoded === "string") return null;
+        if (!decoded.userId || !decoded.expiresAt) return null;
         return decoded as JwtPayload;
     } catch (err) {
         return null;
