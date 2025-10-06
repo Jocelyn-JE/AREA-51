@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
         '/choose-action': (context) => const ChooseActionScreen(),
         '/choose-reactions': (context) => const ChooseReactionsScreen(),
         '/confirm-naming': (context) => const ConfirmNamingScreen(),
-        '/my-areas': (context) => const  MyAreasScreen(),
+        '/my-areas': (context) => const MyAreasScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/notifications': (context) => const NotificationsScreen(),
       },
