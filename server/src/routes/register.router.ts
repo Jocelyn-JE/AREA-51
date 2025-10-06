@@ -14,9 +14,16 @@ const router = express.Router();
 export type User = {
     _id?: ObjectId;
     email: string;
-    password: string;
+    password: string | null;
     username: string;
     role?: string;
+    googleId: string | null;
+};
+
+type RegisterRequest = {
+    email: string;
+    password: string;
+    username: string;
 };
 
 router.post("/", async (req, res) => {
@@ -25,9 +32,14 @@ router.post("/", async (req, res) => {
         checkExactFields(req.body, res, ["email", "username", "password"])
     )
         return;
-    var { email, password, username } = req.body as User;
+
+    // Use const for password, let for fields that get reassigned
+    let { email, username } = req.body as RegisterRequest;
+    const { password } = req.body as RegisterRequest;
+
     email = email.toLowerCase().trim();
     username = username.trim();
+
     if (!isValidEmail(email))
         return res.status(400).json({ error: "Invalid email format" });
     if (areSomeEmpty(email, password, username))
@@ -43,7 +55,8 @@ router.post("/", async (req, res) => {
             email,
             password: await hashPassword(password),
             username,
-            role: "user"
+            role: "user",
+            googleId: null
         });
         res.status(201).json({
             message: "User registered successfully",

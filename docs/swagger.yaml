@@ -113,6 +113,61 @@ paths:
           $ref: '#/components/responses/Error401'
         '500':
           $ref: '#/components/responses/Error500'
+  /api/auth/google/verify:
+    post:
+      summary: Verify Google token and authenticate user
+      description: Verify a Google OAuth token, create a new user if not existing, and return a JWT token for authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  $ref: '#/components/schemas/JWT'
+                  description: Google OAuth token to verify
+      responses:
+        '200':
+          description: User authenticated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+                  userID:
+                    $ref: '#/components/schemas/ObjectId'
+                    description: Unique identifier for the user
+                  token:
+                    $ref: '#/components/schemas/JWT'
+                    description: JWT token for authenticated sessions
+        '201':
+          description: New user created and authenticated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User created and logged in successfully
+                  userID:
+                    $ref: '#/components/schemas/ObjectId'
+                    description: Unique identifier for the newly created user
+                  token:
+                    $ref: '#/components/schemas/JWT'
+                    description: JWT token for authenticated sessions
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
 
 components:
   schemas:
