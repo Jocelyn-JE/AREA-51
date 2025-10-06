@@ -41,6 +41,8 @@ async function findOrCreateUser(
     let user = (await db
         .collection<User>("users")
         .findOne({ email })) as User | null;
+    let message = "Login successful";
+    let statusCode = 200;
     if (user) {
         if (user.googleId !== googleId)
             return res.status(403).json({
@@ -50,28 +52,22 @@ async function findOrCreateUser(
             console.error("User found without _id:", user);
             return res.status(500).json({ error: "Internal server error" });
         }
-        // User exists and googleId matches, proceed to generate token
-        return res.status(200).json({
-            message: "Login successful",
-            userID: user._id,
-            token: generateToken(user._id)
-        });
     } else {
         // User does not exist, create a new user
-        user = await createUser(email, name, googleId);
+        user = await createGoogleUser(email, name, googleId);
         if (!user._id) {
             console.error("Created user missing _id:", user);
             return res.status(500).json({ error: "Internal server error" });
         }
-        return res.status(201).json({
-            message: "User created successfully",
-            userID: user._id,
-            token: generateToken(user._id)
-        });
+        message = "User created and logged in successfully";
+        statusCode = 201;
     }
+    return res
+        .status(statusCode)
+        .json({ message, userID: user._id, token: generateToken(user._id) });
 }
 
-async function createUser(email: string, name: string, googleId: string) {
+async function createGoogleUser(email: string, name: string, googleId: string) {
     try {
         const newUser: User = {
             email,
