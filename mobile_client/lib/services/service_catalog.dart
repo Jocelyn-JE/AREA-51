@@ -45,10 +45,4 @@ const kServicesCatalog = <ServiceInfo>[
     description: 'Social media platform',
     connected: false,
   ),
-    ServiceInfo(
-    name: 'PronHub',
-    icon: Icons.all_out_sharp,
-    description: 'you know what it is',
-    connected: false,
-  ),
 ];
