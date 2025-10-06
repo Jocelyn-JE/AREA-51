@@ -10,3 +10,19 @@ import { ObjectId } from "mongodb";
 export const isObjectId = (id: string): boolean => {
     return ObjectId.isValid(id) && String(new ObjectId(id)) === id;
 };
+
+/** Checks if an object with the given ID exists in the specified collection.
+ *
+ * @param collectionName - The name of the MongoDB collection.
+ * @param id - The ObjectId to check for existence.
+ * @returns A promise that resolves to true if the object exists, false otherwise.
+ */
+export const objectExistsIn = async (
+    collectionName: string,
+    id: ObjectId
+): Promise<boolean> => {
+    const resultDocument = await db
+        .collection(collectionName)
+        .findOne({ _id: id });
+    return resultDocument !== null;
+};
