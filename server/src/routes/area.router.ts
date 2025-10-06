@@ -1,7 +1,8 @@
 import express from "express";
 import { db } from "../mongodb";
-import { isObjectId, verifyToken } from "../utils/jwt";
+import { verifyToken } from "../utils/jwt";
 import { ObjectId } from "mongodb";
+import { isObjectId } from "../utils/db";
 
 export type Area = {
     _id?: ObjectId;
