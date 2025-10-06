@@ -1,6 +1,37 @@
 import { db } from "../mongodb";
 import { ObjectId } from "mongodb";
 
+export type ClientInfo = {
+    host: string;
+};
+
+export type Service = {
+    _id: ObjectId;
+    name: string;
+    actions: { name: string; description: string }[];
+    reactions: { name: string; description: string }[];
+};
+
+export type Area = {
+    _id?: ObjectId;
+    actionServiceId: ObjectId;
+    actionName: string;
+    reactionServiceId: ObjectId;
+    reactionName: string;
+    userId: ObjectId;
+    createdAt: Date;
+};
+
+export type ServerInfo = {
+    current_time: number;
+    services: Service[];
+};
+
+export type AboutInfo = {
+    client: ClientInfo;
+    server: ServerInfo;
+};
+
 /**
  * Checks if a string is a valid MongoDB ObjectId.
  *

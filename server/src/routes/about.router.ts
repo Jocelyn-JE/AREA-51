@@ -1,27 +1,6 @@
 import express from "express";
 import { db } from "../mongodb";
-import { ObjectId } from "mongodb";
-
-type ClientInfo = {
-    host: string;
-};
-
-type Service = {
-    _id: ObjectId;
-    name: string;
-    actions: { name: string; description: string }[];
-    reactions: { name: string; description: string }[];
-};
-
-type ServerInfo = {
-    current_time: number;
-    services: Service[];
-};
-
-type AboutInfo = {
-    client: ClientInfo;
-    server: ServerInfo;
-};
+import { Service, AboutInfo, ClientInfo, ServerInfo } from "../utils/db";
 
 function getClientInfo(req: express.Request): ClientInfo {
     return {
@@ -37,17 +16,12 @@ async function getServerInfo(): Promise<ServerInfo> {
 }
 
 async function getServices(): Promise<Service[]> {
-    const documents = await collection.find({}).toArray();
-    return documents.map((doc) => ({
-        _id: doc._id,
-        name: doc.name,
-        actions: doc.actions,
-        reactions: doc.reactions
-    }));
+    const documents = await services.find().toArray();
+    return documents;
 }
 
 const router = express.Router();
-const collection = db.collection("services");
+const services = db.collection<Service>("services");
 
 router.use("/", async (req, res) => {
     const aboutInfo: AboutInfo = {

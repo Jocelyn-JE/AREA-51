@@ -3,21 +3,33 @@ import { Request, Response } from "express";
 import { db } from "../mongodb";
 import { verifyToken } from "../utils/jwt";
 import { ObjectId } from "mongodb";
-import { isObjectId, objectExistsIn } from "../utils/db";
-
-export type Area = {
-    _id?: ObjectId;
-    actionServiceId: ObjectId;
-    actionName: string;
-    reactionServiceId: ObjectId;
-    reactionName: string;
-    userId: ObjectId;
-    createdAt: Date;
-};
+import { isObjectId, objectExistsIn, Service } from "../utils/db";
+import { Area } from "../utils/db";
 
 const router = express.Router();
 
-function isValidArea(req: Request, res: Response): Area | null {
+async function serviceHasAction(
+    serviceId: ObjectId,
+    actionName: string
+): Promise<boolean> {
+    const service = await db
+        .collection<Service>("services")
+        .findOne({ _id: serviceId, "actions.name": actionName });
+    return service !== null;
+}
+
+async function serviceHasReaction(
+    serviceId: ObjectId,
+    reactionName: string
+): Promise<boolean> {
+    const service = await db.collection<Service>("services").findOne({
+        _id: serviceId,
+        "reactions.name": reactionName
+    });
+    return service !== null;
+}
+
+async function isValidArea(req: Request, res: Response): Promise<Area | null> {
     const actionServiceId = req.params.actionServiceId;
     const actionName = req.params.actionName;
     const reactionServiceId = req.params.reactionServiceId;
@@ -46,6 +58,14 @@ function isValidArea(req: Request, res: Response): Area | null {
         });
         return null;
     }
+    if (!(await objectExistsIn("services", new ObjectId(actionServiceId)))) {
+        res.status(400).json({ error: "Action service does not exist" });
+        return null;
+    }
+    if (!(await objectExistsIn("services", new ObjectId(reactionServiceId)))) {
+        res.status(400).json({ error: "Reaction service does not exist" });
+        return null;
+    }
     return {
         actionServiceId: new ObjectId(actionServiceId),
         actionName,
@@ -60,7 +80,7 @@ router.post(
     "/:actionServiceId/:actionName/:reactionServiceId/:reactionName",
     verifyToken,
     async (req, res) => {
-        const newArea = isValidArea(req, res);
+        const newArea = await isValidArea(req, res);
         if (newArea === null) return;
         try {
             const result = await db
