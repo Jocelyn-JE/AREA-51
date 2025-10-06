@@ -29,42 +29,55 @@ async function serviceHasReaction(
     return service !== null;
 }
 
-async function isValidArea(req: Request, res: Response): Promise<Area | null> {
+async function isValidArea(
+    req: Request,
+    res: Response,
+    userId: ObjectId
+): Promise<Area | null> {
     const actionServiceId = req.params.actionServiceId;
     const actionName = req.params.actionName;
     const reactionServiceId = req.params.reactionServiceId;
     const reactionName = req.params.reactionName;
-    const userId = req.userId;
-    if (
-        !actionServiceId ||
-        !actionName ||
-        !reactionServiceId ||
-        !reactionName ||
-        !userId
-    ) {
-        res.status(400).json({
-            error: "Missing area data. Required: actionServiceId, actionName, reactionServiceId, reactionName, userId"
-        });
-        return null;
-    }
-    if (
-        isObjectId(actionServiceId) === false ||
-        isObjectId(reactionServiceId) === false ||
-        typeof actionName !== "string" ||
-        typeof reactionName !== "string"
-    ) {
-        res.status(400).json({
-            error: "Invalid area data types. Expected: actionServiceId (ObjectId), actionName (string), reactionServiceId (ObjectId), reactionName (string), userId (ObjectId)"
-        });
-        return null;
-    }
-    if (!(await objectExistsIn("services", new ObjectId(actionServiceId)))) {
-        res.status(400).json({ error: "Action service does not exist" });
-        return null;
-    }
-    if (!(await objectExistsIn("services", new ObjectId(reactionServiceId)))) {
-        res.status(400).json({ error: "Reaction service does not exist" });
-        return null;
+    const conditions: [boolean, string][] = [
+        [!actionServiceId, "Missing actionServiceId"],
+        [!actionName, "Missing actionName"],
+        [!reactionServiceId, "Missing reactionServiceId"],
+        [!reactionName, "Missing reactionName"],
+        [!isObjectId(actionServiceId), "Invalid actionServiceId"],
+        [!isObjectId(reactionServiceId), "Invalid reactionServiceId"],
+        [typeof actionName !== "string", "Invalid actionName"],
+        [typeof reactionName !== "string", "Invalid reactionName"],
+        [
+            !(await objectExistsIn("services", new ObjectId(actionServiceId))),
+            "Action service does not exist"
+        ],
+        [
+            !(await objectExistsIn(
+                "services",
+                new ObjectId(reactionServiceId)
+            )),
+            "Reaction service does not exist"
+        ],
+        [
+            !(await serviceHasAction(
+                new ObjectId(actionServiceId),
+                actionName
+            )),
+            "Action service does not have the specified action"
+        ],
+        [
+            !(await serviceHasReaction(
+                new ObjectId(reactionServiceId),
+                reactionName
+            )),
+            "Reaction service does not have the specified reaction"
+        ]
+    ];
+    for (const [condition, errorMsg] of conditions) {
+        if (condition) {
+            res.status(400).json({ error: errorMsg });
+            return null;
+        }
     }
     return {
         actionServiceId: new ObjectId(actionServiceId),
@@ -80,7 +93,8 @@ router.post(
     "/:actionServiceId/:actionName/:reactionServiceId/:reactionName",
     verifyToken,
     async (req, res) => {
-        const newArea = await isValidArea(req, res);
+        if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+        const newArea = await isValidArea(req, res, req.userId);
         if (newArea === null) return;
         try {
             const result = await db
