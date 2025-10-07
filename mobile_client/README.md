@@ -73,7 +73,7 @@ This will show you what dependencies you still need to install.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Jocelyn-JE/AREA-51.git
+   git clone <repository-url>
    cd AREA-51/mobile_client
    ```
 
