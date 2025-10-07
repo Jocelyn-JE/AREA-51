@@ -122,7 +122,7 @@ router.delete("/:areaId", verifyToken, async (req, res) => {
     const userId = req.userId;
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
     if (!areaId) return res.status(400).json({ error: "Missing areaId" });
-    if (isObjectId(areaId) === false)
+    if (!isObjectId(areaId))
         return res.status(400).json({ error: "Invalid areaId" });
     const _id = new ObjectId(areaId);
     try {
