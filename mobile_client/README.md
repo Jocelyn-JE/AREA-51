@@ -32,16 +32,8 @@ Before you begin, make sure you have the following installed on your system:
 4. Reload your shell: `source ~/.zshrc`
 
 #### On Linux:
-1. Download the Flutter SDK:
-   ```bash
-   cd ~
-   wget https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.x.x-stable.tar.xz
-   tar xf flutter_linux_3.x.x-stable.tar.xz
-   ```
-2. Add Flutter to your PATH by adding this line to your shell profile (`.zshrc`, `.bashrc`, etc.):
-   ```bash
-   export PATH="$PATH:$HOME/flutter/bin"
-   ```
+1. Download the Flutter SDK from [flutter.dev](https://docs.flutter.dev/get-started/install/linux)
+2. Follow the instructions on the official page to extract the SDK and add Flutter to your PATH.
 3. Reload your shell: `source ~/.zshrc`
 
 ### Step 2: Verify Flutter Installation
