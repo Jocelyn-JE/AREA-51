@@ -28,6 +28,7 @@ function verifyTokenInternal(token: string): JwtPayload | null {
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         if (typeof decoded === "string") return null;
+        if (!decoded.userId || !decoded.expiresAt) return null;
         return decoded as JwtPayload;
     } catch (err) {
         return null;
