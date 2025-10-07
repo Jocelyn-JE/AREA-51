@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { connectToDb, closeDbConnection } from "./mongodb";
+import { initializeAllServices } from "./services";
 
 // Routes
 import swaggerRouter from "./routes/swagger.router";
@@ -8,6 +9,7 @@ import aboutRouter from "./routes/about.router";
 import registerRouter from "./routes/register.router";
 import loginRouter from "./routes/login.router";
 import authRouter from "./routes/auth.router";
+import areaRouter from "./routes/area.router";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -31,6 +33,8 @@ app.use("/api/register", registerRouter);
 app.use("/api/login", loginRouter);
 // Auth route
 app.use("/api/auth", authRouter);
+// Area route
+app.use("/api/areas", areaRouter);
 
 app.listen(port, () => {
     console.log(`Backend listening on port ${port}`);
@@ -48,11 +52,16 @@ async function run() {
             console.log("Retrying DB connection in 2 seconds...");
             await sleep(2000);
         }
+
+        // Initialize all services
+        await initializeAllServices();
+
         process.on("SIGINT", async () => {
             await closeDbConnection();
             console.log("Goodbye!");
             process.exit(0);
         });
+        console.log("Server is running\nPress Ctrl+C to exit");
         setInterval(() => {
             // Polling logic for background tasks can be added here
             // Like checking for updates on external services for actions

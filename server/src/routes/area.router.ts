@@ -3,151 +3,233 @@ import { Request, Response } from "express";
 import { db } from "../mongodb";
 import { verifyToken } from "../utils/jwt";
 import { ObjectId } from "mongodb";
-import { isObjectId, objectExistsIn, Service, Area } from "../utils/db";
 import { validateJSONRequest } from "../utils/request.validation";
+import { getService, serviceRegistry } from "../services";
+import { AreaExecution, areaEngine } from "../services/area-engine";
 
 const router = express.Router();
 
-async function serviceHasAction(
-    serviceId: ObjectId,
-    actionName: string
-): Promise<boolean> {
-    const service = await db
-        .collection<Service>("services")
-        .findOne({ _id: serviceId, "actions.name": actionName });
-    return service !== null;
+interface CreateAreaRequest {
+    actionServiceName: string;
+    actionName: string;
+    actionParameters: Record<string, unknown>;
+    reactionServiceName: string;
+    reactionName: string;
+    reactionParameters: Record<string, unknown>;
+    name?: string;
+    description?: string;
 }
 
-async function serviceHasReaction(
-    serviceId: ObjectId,
-    reactionName: string
-): Promise<boolean> {
-    const service = await db.collection<Service>("services").findOne({
-        _id: serviceId,
-        "reactions.name": reactionName
-    });
-    return service !== null;
-}
+// POST /areas - Create a new area
+router.post("/", verifyToken, async (req: Request, res: Response) => {
+    if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
 
-async function isValidArea(
-    req: Request,
-    res: Response,
-    userId: ObjectId
-): Promise<Area | null> {
-    const actionServiceId = req.params.actionServiceId;
-    const actionName = req.params.actionName;
-    const reactionServiceId = req.params.reactionServiceId;
-    const reactionName = req.params.reactionName;
-    const conditions: [boolean | Promise<boolean>, string][] = [
-        [!actionServiceId, "Missing actionServiceId"],
-        [!actionName, "Missing actionName"],
-        [!reactionServiceId, "Missing reactionServiceId"],
-        [!reactionName, "Missing reactionName"],
-        [!isObjectId(actionServiceId), "Invalid actionServiceId"],
-        [!isObjectId(reactionServiceId), "Invalid reactionServiceId"],
-        [typeof actionName !== "string", "Invalid actionName"],
-        [typeof reactionName !== "string", "Invalid reactionName"],
-        [
-            objectExistsIn("services", new ObjectId(actionServiceId)).then(
-                (exists) => !exists
-            ),
-            "Action service does not exist"
-        ],
-        [
-            objectExistsIn("services", new ObjectId(reactionServiceId)).then(
-                (exists) => !exists
-            ),
-            "Reaction service does not exist"
-        ],
-        [
-            serviceHasAction(new ObjectId(actionServiceId), actionName).then(
-                (has) => !has
-            ),
-            "Action service does not have the specified action"
-        ],
-        [
-            serviceHasReaction(
-                new ObjectId(reactionServiceId),
-                reactionName
-            ).then((has) => !has),
-            "Reaction service does not have the specified reaction"
-        ]
-    ];
+    try {
+        if (!validateJSONRequest(req, res)) return;
 
-    // Await all async conditions concurrently
-    const resolvedConditions = await Promise.all(
-        conditions.map(
-            async ([condition, errorMsg]) =>
-                [await condition, errorMsg] as [boolean, string]
-        )
-    );
+        const {
+            actionServiceName,
+            actionName,
+            actionParameters,
+            reactionServiceName,
+            reactionName,
+            reactionParameters
+        } = req.body as CreateAreaRequest;
 
-    // Check for any validation errors
-    for (const [condition, errorMsg] of resolvedConditions) {
-        if (condition) {
-            res.status(400).json({ error: errorMsg });
-            return null;
+        // Basic validation
+        if (
+            !actionServiceName ||
+            !actionName ||
+            !reactionServiceName ||
+            !reactionName
+        ) {
+            return res.status(400).json({
+                error: "Missing required fields: actionServiceName, actionName, reactionServiceName, reactionName"
+            });
         }
-    }
-    if (!validateJSONRequest(req, res)) return null;
-    const { actionOptions, reactionOptions } = req.body || {
-        actionOptions: undefined,
-        reactionOptions: undefined
-    };
-    return {
-        actionServiceId: new ObjectId(actionServiceId),
-        actionName,
-        actionOptions,
-        reactionServiceId: new ObjectId(reactionServiceId),
-        reactionName,
-        reactionOptions,
-        userId: userId,
-        createdAt: new Date()
-    };
-}
 
-router.post(
-    "/:actionServiceId/:actionName/:reactionServiceId/:reactionName",
-    verifyToken,
-    async (req, res) => {
-        if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
-        try {
-            const newArea = await isValidArea(req, res, req.userId);
-            if (newArea === null) return;
-            const result = await db
-                .collection<Area>("areas")
-                .insertOne(newArea);
+        // Validate services exist
+        const actionService = getService(actionServiceName);
+        const reactionService = getService(reactionServiceName);
+
+        if (!actionService) {
+            // If action service is not found it will be undefined
+            return res.status(400).json({
+                error: `Action service '${actionServiceName}' not found`
+            });
+        }
+        if (!reactionService) {
+            // Same for reaction service
+            return res.status(400).json({
+                error: `Reaction service '${reactionServiceName}' not found`
+            });
+        }
+        const newArea: AreaExecution = {
+            actionServiceName,
+            actionName,
+            actionParameters: actionParameters || {},
+            reactionServiceName,
+            reactionName,
+            reactionParameters: reactionParameters || {},
+            userId: req.userId,
+            enabled: true, // Areas are enabled by default
+            createdAt: new Date()
+        };
+        const validationErrors = await areaEngine.validateArea(newArea);
+        if (validationErrors.length > 0) {
+            return res.status(400).json({
+                error: `Area validation failed: ${validationErrors.join(", ")}`
+            });
+        }
+        // Insert into database
+        const result = await db
+            .collection<AreaExecution>("areas")
+            .insertOne(newArea);
+        res.status(201).json({
+            message: "Area created successfully",
+            area: {
+                _id: result.insertedId,
+                ...newArea
+            }
+        });
+    } catch (error) {
+        console.error("Error creating area:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// GET /areas - Get user's areas
+router.get("/", verifyToken, async (req: Request, res: Response) => {
+    if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+    try {
+        const areas = await db
+            .collection<AreaExecution>("areas")
+            .find({ userId: req.userId })
+            .toArray();
+        res.status(200).json({ areas });
+    } catch (error) {
+        console.error("Error fetching areas:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// PUT /areas/:id/toggle - Enable/disable an area
+router.put("/:id/toggle", verifyToken, async (req: Request, res: Response) => {
+    if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+    try {
+        const areaId = req.params.id;
+        if (!ObjectId.isValid(areaId))
+            return res.status(400).json({ error: "Invalid area ID" });
+        const { enabled } = req.body;
+        if (typeof enabled !== "boolean")
             return res
-                .status(201)
-                .json({ message: "Area created", areaId: result.insertedId });
+                .status(400)
+                .json({ error: "'enabled' must be a boolean" });
+        const result = await db
+            .collection<AreaExecution>("areas")
+            .updateOne(
+                { _id: new ObjectId(areaId), userId: req.userId },
+                { $set: { enabled } }
+            );
+        if (result.matchedCount === 0)
+            return res.status(404).json({ error: "Area not found" });
+        res.status(200).json({
+            message: `Area ${enabled ? "enabled" : "disabled"} successfully`
+        });
+    } catch (error) {
+        console.error("Error toggling area:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// POST /areas/:id/execute - Manually execute an area
+router.post(
+    "/:id/execute",
+    verifyToken,
+    async (req: Request, res: Response) => {
+        if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+
+        try {
+            const areaId = req.params.id;
+            if (!ObjectId.isValid(areaId)) {
+                return res.status(400).json({ error: "Invalid area ID" });
+            }
+
+            // Verify area belongs to user
+            const area = await db.collection<AreaExecution>("areas").findOne({
+                _id: new ObjectId(areaId),
+                userId: new ObjectId(req.userId)
+            });
+
+            if (!area) {
+                return res.status(404).json({ error: "Area not found" });
+            }
+
+            // Execute the area
+            await areaEngine.executeArea(new ObjectId(areaId));
+
+            res.json({ message: "Area executed successfully" });
         } catch (error) {
-            console.error("Error creating area:", error);
-            return res.status(500).json({ error: "Server error" });
+            console.error("Error executing area:", error);
+            res.status(500).json({
+                error: "Failed to execute area",
+                details:
+                    error instanceof Error ? error.message : "Unknown error"
+            });
         }
     }
 );
 
-router.delete("/:areaId", verifyToken, async (req, res) => {
-    const areaId = req.params.areaId;
-    const userId = req.userId;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
-    if (!areaId) return res.status(400).json({ error: "Missing areaId" });
-    if (!isObjectId(areaId))
-        return res.status(400).json({ error: "Invalid areaId" });
-    const _id = new ObjectId(areaId);
+// DELETE /areas/:id - Delete an area
+router.delete("/:id", verifyToken, async (req: Request, res: Response) => {
+    if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+
     try {
-        const result = await db
-            .collection<Area>("areas")
-            .deleteOne({ _id, userId });
+        const areaId = req.params.id;
+        if (!ObjectId.isValid(areaId))
+            return res.status(400).json({ error: "Invalid area ID" });
+        const result = await db.collection<AreaExecution>("areas").deleteOne({
+            _id: new ObjectId(areaId),
+            userId: req.userId
+        });
         if (result.deletedCount === 0)
-            return res.status(404).json({
-                error: "Area not found or you do not have permission to delete it"
-            });
-        return res.status(200).json({ message: "Area deleted" });
+            return res.status(404).json({ error: "Area not found" });
+        res.status(200).json({ message: "Area deleted successfully" });
     } catch (error) {
         console.error("Error deleting area:", error);
-        return res.status(500).json({ error: "Server error" });
+        res.status(500).json({ error: "Internal server error" });
     }
 });
+
+// POST /test/reaction - Test a reaction
+router.post(
+    "/test/reaction",
+    verifyToken,
+    async (req: Request, res: Response) => {
+        if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+        try {
+            if (!validateJSONRequest(req, res)) return;
+            const { serviceName, reactionName, parameters } = req.body;
+            if (!serviceName || !reactionName) {
+                return res.status(400).json({
+                    error: "serviceName and reactionName are required"
+                });
+            }
+            await areaEngine.executeReaction(
+                serviceName,
+                reactionName,
+                parameters || {}
+            );
+            res.status(200).json({ message: "Reaction executed successfully" });
+        } catch (error) {
+            console.error("Error testing reaction:", error);
+            res.status(500).json({
+                error: "Failed to test reaction",
+                details:
+                    error instanceof Error ? error.message : "Unknown error"
+            });
+        }
+    }
+);
 
 export default router;

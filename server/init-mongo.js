@@ -14,12 +14,8 @@ usersCollection.insertOne({
 });
 usersCollection.createIndex({ email: 1 }, { unique: true });
 
-const servicesCollection = db.services;
-servicesCollection.insertOne({
-    name: "example_service",
-    actions: [{ name: "example_action", description: "An example action" }],
-    reactions: [
-        { name: "example_reaction", description: "An example reaction" }
-    ]
-});
-servicesCollection.createIndex({ name: 1 }, { unique: true });
+// Services are now code-defined, not stored in DB
+// Only user-created areas are stored in the areas collection
+const areasCollection = db.areas;
+areasCollection.createIndex({ userId: 1 });
+areasCollection.createIndex({ enabled: 1 });
