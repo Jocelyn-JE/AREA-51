@@ -2,10 +2,10 @@ import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 
-function Signup() {
+function Login() {
     const navigate = useNavigate();
 
-    const [identifier, setIdentifier] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -13,13 +13,25 @@ function Signup() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        setMessage(`login request: ${identifier}, ${password}`);
+        const loginRes = await fetch("http://localhost:3000/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const loginData = await loginRes.json();
+      if (!loginRes.ok) {
+        throw new Error(loginData.error || "Auto-login failed");
+      }
+
+      // Step 3: Store token and redirect
+      localStorage.setItem("token", loginData.token);
+      navigate("/explore"); // Redirect to explore page
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex max-w-screen flex-col">
-            <main className="flex flex-1 flex-col justify-center items-center text-center">
-                <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Connect to your account</h2>
+        <div className="h-screen bg-gray-50 max-w-screen flex flex-1 flex-col justify-center items-center text-center">
+            <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Connect to your account</h2>
                 <form onSubmit={handleSubmit} className="w-full max-w-md bg-white p-8 rounded-lg shadow">
                     {error && <p className="text-red-500 mb-4">{error}</p>}
                     <div className="mb-4 text-left">
@@ -29,8 +41,8 @@ function Signup() {
                         <input
                             type="text"
                             id="identifier"
-                            value={identifier}
-                            onChange={(e) => setIdentifier(e.target.value)}
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                             required
                         />
@@ -74,10 +86,8 @@ function Signup() {
                         setError("Google login failed");
                     }}
                 />
-                {message && <p className="mt-4 text-green-600">{message}</p>}
-            </main>
-            
+                {message && <p className="mt-4 text-green-600">{message}</p>}           
         </div>
     );
 }
-export default Signup;
+export default Login;
