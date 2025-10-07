@@ -8,6 +8,8 @@ services:
     networks:
       - backend
       - frontend
+    volumes:
+      - ./docs:/docs
     env_file:
       - .env
   client_web:
