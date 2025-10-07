@@ -1,8 +1,7 @@
 function Explore() {
   return (
-    <div className="min-h-screen bg-gray-50 flex w-screen flex-col">
+    <div className="min-h-screen bg-gray-50 w-screen flex flex-1 flex-col justify-center items-center text-center px-6">
       {/* Hero section */}
-      <main className="flex flex-1 flex-col justify-center items-center text-center px-6">
         <h2 className="text-4xl font-extrabold text-gray-900 mb-4">
           Connect your apps and automate tasks
         </h2>
@@ -25,9 +24,8 @@ function Explore() {
           >
             Explore Services
           </a>
-        </div>
-      </main>
-    </div>
+          </div>
+      </div>
   );
 }
 
