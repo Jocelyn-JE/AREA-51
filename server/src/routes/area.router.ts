@@ -5,6 +5,7 @@ import { verifyToken } from "../utils/jwt";
 import { ObjectId } from "mongodb";
 import { isObjectId, objectExistsIn, Service } from "../utils/db";
 import { Area } from "../utils/db";
+import { validateJSONRequest } from "../utils/request.validation";
 
 const router = express.Router();
 
@@ -79,11 +80,18 @@ async function isValidArea(
             return null;
         }
     }
+    if (!validateJSONRequest(req, res)) return null;
+    const { actionOptions, reactionOptions } = req.body || {
+        actionOptions: undefined,
+        reactionOptions: undefined
+    };
     return {
         actionServiceId: new ObjectId(actionServiceId),
         actionName,
+        actionOptions,
         reactionServiceId: new ObjectId(reactionServiceId),
         reactionName,
+        reactionOptions,
         userId: userId,
         createdAt: new Date()
     };

@@ -16,8 +16,10 @@ export type Area = {
     _id?: ObjectId;
     actionServiceId: ObjectId;
     actionName: string;
+    actionOptions?: Record<string, unknown>;
     reactionServiceId: ObjectId;
     reactionName: string;
+    reactionOptions?: Record<string, unknown>;
     userId: ObjectId;
     createdAt: Date;
 };
