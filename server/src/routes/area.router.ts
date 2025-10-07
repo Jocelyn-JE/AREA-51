@@ -38,7 +38,7 @@ async function isValidArea(
     const actionName = req.params.actionName;
     const reactionServiceId = req.params.reactionServiceId;
     const reactionName = req.params.reactionName;
-    const conditions: [boolean, string][] = [
+    const conditions: [boolean | Promise<boolean>, string][] = [
         [!actionServiceId, "Missing actionServiceId"],
         [!actionName, "Missing actionName"],
         [!reactionServiceId, "Missing reactionServiceId"],
@@ -48,32 +48,42 @@ async function isValidArea(
         [typeof actionName !== "string", "Invalid actionName"],
         [typeof reactionName !== "string", "Invalid reactionName"],
         [
-            !(await objectExistsIn("services", new ObjectId(actionServiceId))),
+            objectExistsIn("services", new ObjectId(actionServiceId)).then(
+                (exists) => !exists
+            ),
             "Action service does not exist"
         ],
         [
-            !(await objectExistsIn(
-                "services",
-                new ObjectId(reactionServiceId)
-            )),
+            objectExistsIn("services", new ObjectId(reactionServiceId)).then(
+                (exists) => !exists
+            ),
             "Reaction service does not exist"
         ],
         [
-            !(await serviceHasAction(
-                new ObjectId(actionServiceId),
-                actionName
-            )),
+            serviceHasAction(new ObjectId(actionServiceId), actionName).then(
+                (has) => !has
+            ),
             "Action service does not have the specified action"
         ],
         [
-            !(await serviceHasReaction(
+            serviceHasReaction(
                 new ObjectId(reactionServiceId),
                 reactionName
-            )),
+            ).then((has) => !has),
             "Reaction service does not have the specified reaction"
         ]
     ];
-    for (const [condition, errorMsg] of conditions) {
+
+    // Await all async conditions concurrently
+    const resolvedConditions = await Promise.all(
+        conditions.map(
+            async ([condition, errorMsg]) =>
+                [await condition, errorMsg] as [boolean, string]
+        )
+    );
+
+    // Check for any validation errors
+    for (const [condition, errorMsg] of resolvedConditions) {
         if (condition) {
             res.status(400).json({ error: errorMsg });
             return null;
@@ -101,9 +111,9 @@ router.post(
     verifyToken,
     async (req, res) => {
         if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
-        const newArea = await isValidArea(req, res, req.userId);
-        if (newArea === null) return;
         try {
+            const newArea = await isValidArea(req, res, req.userId);
+            if (newArea === null) return;
             const result = await db
                 .collection<Area>("areas")
                 .insertOne(newArea);
