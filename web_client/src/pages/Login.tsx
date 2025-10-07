@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Login() {
     const navigate = useNavigate();
@@ -8,7 +9,6 @@ function Login() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
-    const [message, setMessage] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,9 +24,8 @@ function Login() {
         throw new Error(loginData.error || "Auto-login failed");
       }
 
-      // Step 3: Store token and redirect
       localStorage.setItem("token", loginData.token);
-      navigate("/explore"); // Redirect to explore page
+      navigate("/explore");
     };
 
     return (
@@ -77,16 +76,23 @@ function Login() {
                 </div>
                 <GoogleLogin
                     onSuccess={(credentialResponse) => {
-                        console.log(credentialResponse);
-                        setMessage("Google login successful");
-                        navigate("/explore");
+                        axios.post("http://localhost:3000/api/auth/google/verify", {
+                            token: credentialResponse.credential
+                        })
+                        .then(response => {
+                            localStorage.setItem("token", response.data.token);
+                            console.log(localStorage.getItem("token"));
+                            navigate("/explore");
+                        }).catch(error => {
+                            console.error("Google login error:", error);
+                            setError("Google login failed");
+                        });
                     }}
                     onError={() => {
                         console.log("Login Failed");
                         setError("Google login failed");
                     }}
-                />
-                {message && <p className="mt-4 text-green-600">{message}</p>}           
+                />       
         </div>
     );
 }

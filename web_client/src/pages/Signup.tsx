@@ -24,7 +24,6 @@ function Signup() {
     }
 
     try {
-      // Step 1: Register the user
       const registerRes = await fetch("http://localhost:3000/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -36,7 +35,6 @@ function Signup() {
         throw new Error(registerData.error || "Registration failed");
       }
 
-      // Step 2: Auto-login
       const loginRes = await fetch("http://localhost:3000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -48,9 +46,8 @@ function Signup() {
         throw new Error(loginData.error || "Auto-login failed");
       }
 
-      // Step 3: Store token and redirect
       localStorage.setItem("token", loginData.token);
-      navigate("/explore"); // Redirect to explore page
+      navigate("/explore");
 
     } catch (err: any) {
       setError(err.message);
@@ -133,10 +130,17 @@ function Signup() {
                 </div>
                 <GoogleLogin
                     onSuccess={(credentialResponse) => {
-                        axios.post("http://localhost:3000/auth/google/verify", {
+                        axios.post("http://localhost:3000/api/auth/google/verify", {
                             token: credentialResponse.credential
                         })
-                        navigate("/explore");
+                        .then(response => {
+                            localStorage.setItem("token", response.data.token);
+                            console.log(localStorage.getItem("token"));
+                            navigate("/explore");
+                        }).catch(error => {
+                            console.error("Google login error:", error);
+                            setError("Google login failed");
+                        });
                     }}
                     onError={() => {
                         console.log("Login Failed");
