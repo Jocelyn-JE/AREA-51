@@ -3,8 +3,7 @@ import { Request, Response } from "express";
 import { db } from "../mongodb";
 import { verifyToken } from "../utils/jwt";
 import { ObjectId } from "mongodb";
-import { isObjectId, objectExistsIn, Service } from "../utils/db";
-import { Area } from "../utils/db";
+import { isObjectId, objectExistsIn, Service, Area } from "../utils/db";
 import { validateJSONRequest } from "../utils/request.validation";
 
 const router = express.Router();
