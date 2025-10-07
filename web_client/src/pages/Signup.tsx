@@ -57,7 +57,7 @@ function Signup() {
   };
 
     return (
-        <div className="h-screen bg-gray-50 flex max-w-screen flex flex-1 flex-col justify-center items-center text-center">
+        <div className="h-screen bg-gray-50 flex max-w-screen flex-1 flex-col justify-center items-center text-center">
             <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Create your account</h2>
                 <form onSubmit={handleSubmit} className="w-full max-w-md bg-white p-8 rounded-lg shadow">
                     {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -135,7 +135,6 @@ function Signup() {
                         })
                         .then(response => {
                             localStorage.setItem("token", response.data.token);
-                            console.log(localStorage.getItem("token"));
                             navigate("/explore");
                         }).catch(error => {
                             console.error("Google login error:", error);

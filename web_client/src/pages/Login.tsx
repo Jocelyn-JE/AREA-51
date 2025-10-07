@@ -12,20 +12,24 @@ function Login() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        try {
+          const loginRes = await fetch("http://localhost:3000/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
 
-        const loginRes = await fetch("http://localhost:3000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+          const loginData = await loginRes.json();
+          if (!loginRes.ok) {
+            throw new Error(loginData.error || "Auto-login failed");
+          }
 
-      const loginData = await loginRes.json();
-      if (!loginRes.ok) {
-        throw new Error(loginData.error || "Auto-login failed");
-      }
-
-      localStorage.setItem("token", loginData.token);
-      navigate("/explore");
+          localStorage.setItem("token", loginData.token);
+          navigate("/explore");
+        } catch (err: any) {
+          console.error("Login error:", err);
+          setError(err.message || "Login failed. Please try again.");
+        }
     };
 
     return (
@@ -81,7 +85,6 @@ function Login() {
                         })
                         .then(response => {
                             localStorage.setItem("token", response.data.token);
-                            console.log(localStorage.getItem("token"));
                             navigate("/explore");
                         }).catch(error => {
                             console.error("Google login error:", error);
