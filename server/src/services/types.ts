@@ -1,3 +1,5 @@
+import { ObjectId } from "mongodb";
+
 // Parameter definition for actions/reactions
 export type Parameter = {
     name: string;
@@ -8,12 +10,21 @@ export type Parameter = {
     defaultValue?: string | number | boolean;
 };
 
+// User execution context with OAuth tokens to use in actions/reactions
+export interface ServiceExecutionContext {
+    userId: ObjectId;
+    userTokens: Record<string, string>; // serviceName -> accessToken
+}
+
 // Action with executable function and parameters
 export type Action = {
     name: string;
     description: string;
     parameters: Parameter[];
-    execute: (params: Record<string, unknown>) => Promise<unknown | null>; // Returns data if trigger condition met, null if not
+    execute: (
+        params: Record<string, unknown>,
+        context?: ServiceExecutionContext
+    ) => Promise<unknown | null>; // Returns data if trigger condition met, null if not
 };
 
 // Reaction with executable function and parameters
@@ -21,7 +32,10 @@ export type Reaction = {
     name: string;
     description: string;
     parameters: Parameter[];
-    execute: (params: Record<string, unknown>) => Promise<void>; // No return value, just performs the action
+    execute: (
+        params: Record<string, unknown>,
+        context?: ServiceExecutionContext
+    ) => Promise<void>; // No return value, just performs the action
 };
 
 // For API responses (without executable functions)
@@ -82,7 +96,8 @@ export abstract class BaseService {
     // Find and execute action
     async executeAction(
         actionName: string,
-        params: Record<string, unknown>
+        params: Record<string, unknown>,
+        context?: ServiceExecutionContext
     ): Promise<unknown> {
         const action = this._actions.find((a) => a.name === actionName);
         if (!action) {
@@ -90,13 +105,14 @@ export abstract class BaseService {
                 `Action '${actionName}' not found in service '${this._name}'`
             );
         }
-        return action.execute(params);
+        return action.execute(params, context);
     }
 
     // Find and execute reaction
     async executeReaction(
         reactionName: string,
-        params: Record<string, unknown>
+        params: Record<string, unknown>,
+        context?: ServiceExecutionContext
     ): Promise<void> {
         const reaction = this._reactions.find((r) => r.name === reactionName);
         if (!reaction) {
@@ -104,7 +120,7 @@ export abstract class BaseService {
                 `Reaction '${reactionName}' not found in service '${this._name}'`
             );
         }
-        await reaction.execute(params);
+        await reaction.execute(params, context);
     }
 
     // Abstract method that each service must implement
