@@ -3,7 +3,10 @@ import { Request, Response } from "express";
 import { db } from "../mongodb";
 import { verifyToken } from "../utils/jwt";
 import { ObjectId } from "mongodb";
-import { validateJSONRequest } from "../utils/request.validation";
+import {
+    checkRequiredFields,
+    validateJSONRequest
+} from "../utils/request.validation";
 import { getService } from "../services";
 import { AreaExecution, areaEngine } from "../services/area-engine";
 
@@ -38,15 +41,14 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
 
         // Basic validation
         if (
-            !actionServiceName ||
-            !actionName ||
-            !reactionServiceName ||
-            !reactionName
-        ) {
-            return res.status(400).json({
-                error: "Missing required fields: actionServiceName, actionName, reactionServiceName, reactionName"
-            });
-        }
+            checkRequiredFields(req.body, res, [
+                "actionServiceName",
+                "actionName",
+                "reactionServiceName",
+                "reactionName"
+            ])
+        )
+            return;
 
         // Validate services exist
         const actionService = getService(actionServiceName);
