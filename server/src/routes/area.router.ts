@@ -25,7 +25,7 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
     if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
 
     try {
-        if (!validateJSONRequest(req, res)) return;
+        if (validateJSONRequest(req, res)) return;
 
         const {
             actionServiceName,
@@ -208,7 +208,7 @@ router.post(
     async (req: Request, res: Response) => {
         if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
         try {
-            if (!validateJSONRequest(req, res)) return;
+            if (validateJSONRequest(req, res)) return;
             const { serviceName, reactionName, parameters } = req.body;
             if (!serviceName || !reactionName) {
                 return res.status(400).json({
