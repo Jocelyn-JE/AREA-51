@@ -4,7 +4,7 @@ import { db } from "../mongodb";
 import { verifyToken } from "../utils/jwt";
 import { ObjectId } from "mongodb";
 import { validateJSONRequest } from "../utils/request.validation";
-import { getService, serviceRegistry } from "../services";
+import { getService } from "../services";
 import { AreaExecution, areaEngine } from "../services/area-engine";
 
 const router = express.Router();
