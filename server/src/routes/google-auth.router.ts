@@ -95,22 +95,26 @@ router.post("/verify", async (req, res) => {
 // GET /auth/google/authorize - Initiate OAuth2 flow for service permissions
 router.get("/authorize", verifyToken, async (req, res) => {
     if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
-
-    const scopes = [
-        "https://www.googleapis.com/auth/gmail.readonly",
-        "https://www.googleapis.com/auth/gmail.send",
-        "https://www.googleapis.com/auth/drive.file",
-        "https://www.googleapis.com/auth/drive.readonly",
-        "https://www.googleapis.com/auth/calendar.readonly"
-        // Add other scopes you need for your AREA services
-    ];
-    const authUrl = oauth2Client.generateAuthUrl({
-        access_type: "offline", // Important: gets refresh token
-        scope: scopes,
-        state: req.userId.toString(), // Pass userId to identify user in callback
-        prompt: "consent" // Forces consent screen to get refresh token
-    });
-    res.status(200).json({ authUrl });
+    try {
+        const scopes = [
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/drive.file",
+            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/calendar.readonly"
+            // Add other scopes you need for your AREA services
+        ];
+        const authUrl = oauth2Client.generateAuthUrl({
+            access_type: "offline", // Important: gets refresh token
+            scope: scopes,
+            state: req.userId.toString(), // Pass userId to identify user in callback
+            prompt: "consent" // Forces consent screen to get refresh token
+        });
+        res.status(200).json({ authUrl });
+    } catch (error) {
+        console.error("Error generating Google OAuth URL:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 // GET /auth/google/callback - Handle OAuth2 callback
