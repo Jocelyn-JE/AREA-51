@@ -12,6 +12,7 @@ import {
     OAuthToken
 } from "../utils/google.auth";
 import { ObjectId } from "mongodb";
+import { OAuthTokenManager } from "../services/oauth-token-manager";
 
 const router = express.Router();
 
@@ -95,6 +96,15 @@ router.post("/verify", async (req, res) => {
 // GET /auth/google/authorize - Initiate OAuth2 flow for service permissions
 router.get("/authorize", verifyToken, async (req, res) => {
     if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+    if (
+        OAuthTokenManager.getInstance().getTokensForUser(
+            req.userId,
+            "google"
+        ) !== null
+    )
+        return res
+            .status(400)
+            .json({ message: "Google services already authorized" });
     try {
         const scopes = [
             "https://www.googleapis.com/auth/gmail.readonly",
