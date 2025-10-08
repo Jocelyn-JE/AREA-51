@@ -77,19 +77,22 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       print('🔄 Login Screen: Starting Google Sign-In...');
       final user = await GoogleAuthService.signInWithGoogle();
-      
+      print('${user} Login Screen: Google Sign-In completed.');
+
       if (user != null && mounted) {
         print('✅ Login Screen: Sign-in successful!');
         // Get token information
         final tokenInfo = GoogleAuthService.getTokenInfo();
-        
+
         // Show token dialog before navigating
         await _showTokenDialog(tokenInfo);
-        
+
         // Navigate to dashboard screen
         Navigator.of(context).pushReplacementNamed('/dashboard');
       } else if (mounted) {
-        print('❌ Login Screen: Sign-in returned null (user canceled or failed)');
+        print(
+          '❌ Login Screen: Sign-in returned null (user canceled or failed)',
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Google Sign-In was canceled or failed'),
@@ -102,9 +105,10 @@ class _LoginScreenState extends State<LoginScreen> {
       print('💥 Login Screen Error: $error');
       if (mounted) {
         String errorMessage = 'Google Sign-In failed';
-        
+
         if (error.toString().contains('10:')) {
-          errorMessage = 'OAuth not configured. Check Google Cloud Console setup.';
+          errorMessage =
+              'OAuth not configured. Check Google Cloud Console setup.';
         } else if (error.toString().contains('12501:')) {
           errorMessage = 'Please sign in to your Google account first.';
         } else if (error.toString().contains('7:')) {
@@ -112,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
         } else {
           errorMessage = 'Google Sign-In failed: ${error.toString()}';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Column(
@@ -212,11 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Logo/Title
-                const Icon(
-                  Icons.login,
-                  size: 80,
-                  color: Colors.deepPurple,
-                ),
+                const Icon(Icons.login, size: 80, color: Colors.deepPurple),
                 const SizedBox(height: 32),
                 const Text(
                   'Welcome Back!',
@@ -231,10 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Text(
                   'Sign in to continue',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 48),
 
@@ -263,7 +260,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
                       onPressed: () {
                         setState(() {
@@ -289,14 +288,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text(
-                          'Login',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                      : const Text('Login', style: TextStyle(fontSize: 16)),
                 ),
                 const SizedBox(height: 16),
 
@@ -326,10 +320,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     'https://developers.google.com/identity/images/g-logo.png',
                     height: 20,
                     width: 20,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.account_circle,
-                      size: 20,
-                    ),
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.account_circle, size: 20),
                   ),
                   label: const Text('Continue with Google'),
                   style: OutlinedButton.styleFrom(
@@ -391,10 +383,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(height: 4),
                       Text(
                         '(Any valid email/password will work)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
