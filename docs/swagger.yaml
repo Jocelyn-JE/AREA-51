@@ -7,6 +7,8 @@ info:
 servers:
   - url: http://localhost:3000
     description: Development server
+  - url: http://localhost:8080
+    description: Docker server
 tags:
   - name: System Information
     description: Endpoints for retrieving system metadata and service information
