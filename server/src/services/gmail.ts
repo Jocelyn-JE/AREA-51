@@ -126,22 +126,39 @@ export class GmailService extends BaseService {
     ): Promise<unknown> {
         console.log(`Checking for new emails with filters:`, params);
         // Check if user has Google OAuth token
-        if (!context || !context.userTokens.google)
+        if (!context || !context.userTokens.google) {
+            if (!context) console.error("No context provided");
+            console.debug(context);
             throw new Error("Google OAuth token required to check emails");
+        }
         try {
             // Create authenticated Gmail client
             const gmail = this.getAuthenticatedGmailClient(
                 context.userTokens.google
             );
-
-            // Get recent messages from inbox
+            // Get timestamp of last check (to avoid processing same emails)
+            const lastChecked = params.lastTriggered
+                ? new Date(params.lastTriggered as string)
+                : new Date(Date.now() - 24 * 60 * 60 * 1000); // Default to 24 hours ago
+            const lastCheckedTimestamp = Math.floor(
+                lastChecked.getTime() / 1000
+            );
+            console.log(
+                `Checking for emails newer than ${lastChecked.toISOString()}`
+            );
+            // Get recent messages from inbox after lastTriggered
             const messagesResponse = await gmail.users.messages.list({
                 userId: "me",
                 labelIds: ["INBOX"],
-                maxResults: 10
+                maxResults: 10,
+                q: `after:${lastCheckedTimestamp}` // Only get emails after last check
             });
             const messages = messagesResponse.data.messages;
-            if (!messages || messages.length === 0) return null; // No new emails
+            if (!messages || messages.length === 0) {
+                console.log("No new emails found");
+                return null; // No new emails
+            }
+
             // Get details of the most recent email
             const latestMessage = messages[0];
             if (!latestMessage.id) return null; // Message has no ID

@@ -56,7 +56,9 @@ export class AreaEngine {
             throw new Error(`Area ${areaId} not found or disabled`);
         try {
             // Get user's OAuth tokens
-            const userTokens = await oauthTokenManager.getAllTokensForUser(area.userId);
+            const userTokens = await oauthTokenManager.getAllTokensForUser(
+                area.userId
+            );
             const context = {
                 userId: area.userId,
                 userTokens
@@ -75,9 +77,14 @@ export class AreaEngine {
             console.log(
                 `Checking trigger: ${area.actionServiceName}.${area.actionName}`
             );
+            // Pass lastTriggered to action to avoid duplicate processing
+            const actionParams = {
+                ...area.actionParameters,
+                lastTriggered: area.lastTriggered?.toISOString()
+            };
             const triggerResult = await actionService.executeAction(
                 area.actionName,
-                area.actionParameters,
+                actionParams,
                 context
             );
 
@@ -205,6 +212,41 @@ export class AreaEngine {
             }
         }
         return errors;
+    }
+
+    /**
+     * Execute all enabled areas for all users
+     */
+    async executeAllAreas(): Promise<void> {
+        try {
+            const areas = await db
+                .collection<AreaExecution>("areas")
+                .find({ enabled: true })
+                .toArray();
+            console.log(`Found ${areas.length} enabled areas to check`);
+            // Execute areas in batches to avoid overwhelming the system
+            const BATCH_SIZE = 5;
+            for (let i = 0; i < areas.length; i += BATCH_SIZE) {
+                const batch = areas.slice(i, i + BATCH_SIZE);
+                // Execute batch in parallel
+                const promises = batch.map(async (area) => {
+                    try {
+                        await this.executeArea(area._id);
+                    } catch (error) {
+                        console.error(
+                            `Failed to execute area ${area._id}:`,
+                            error
+                        );
+                    }
+                });
+                await Promise.all(promises);
+                // Small delay between batches to be gentle on external APIs
+                if (i + BATCH_SIZE < areas.length)
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+        } catch (error) {
+            console.error("Error in executeAllAreas:", error);
+        }
     }
 }
 
