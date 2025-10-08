@@ -70,7 +70,7 @@ async function createGoogleUser(email: string, name: string, googleId: string) {
 }
 
 // POST /auth/google/verify - Verify Google ID token and login/register user
-router.post("/google/verify", async (req, res) => {
+router.post("/verify", async (req, res) => {
     if (
         validateJSONRequest(req, res) ||
         checkExactFields(req.body, res, ["token"])
@@ -93,7 +93,7 @@ router.post("/google/verify", async (req, res) => {
 });
 
 // GET /auth/google/authorize - Initiate OAuth2 flow for service permissions
-router.get("/google/authorize", verifyToken, async (req, res) => {
+router.get("/authorize", verifyToken, async (req, res) => {
     if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
 
     const scopes = [
@@ -114,7 +114,7 @@ router.get("/google/authorize", verifyToken, async (req, res) => {
 });
 
 // GET /auth/google/callback - Handle OAuth2 callback
-router.get("/google/callback", async (req, res) => {
+router.get("/callback", async (req, res) => {
     const { code, state: userId } = req.query;
 
     if (!code || !userId || typeof userId !== "string") {

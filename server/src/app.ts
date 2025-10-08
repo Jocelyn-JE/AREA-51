@@ -8,7 +8,7 @@ import swaggerRouter from "./routes/swagger.router";
 import aboutRouter from "./routes/about.router";
 import registerRouter from "./routes/register.router";
 import loginRouter from "./routes/login.router";
-import authRouter from "./routes/auth.router";
+import googleAuthRouter from "./routes/google-auth.router";
 import areaRouter from "./routes/area.router";
 
 const app = express();
@@ -31,8 +31,8 @@ app.get("/about.json", aboutRouter);
 app.use("/api/register", registerRouter);
 // Login route
 app.use("/api/login", loginRouter);
-// Auth route
-app.use("/api/auth", authRouter);
+// Google Auth route
+app.use("/api/auth/google", googleAuthRouter);
 // Area route
 app.use("/api/areas", areaRouter);
 
