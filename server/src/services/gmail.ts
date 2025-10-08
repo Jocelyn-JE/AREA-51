@@ -1,4 +1,10 @@
-import { BaseService, Action, Reaction } from "./types";
+import {
+    BaseService,
+    Action,
+    Reaction,
+    ServiceExecutionContext
+} from "./types";
+import { google } from "googleapis";
 
 export class GmailService extends BaseService {
     constructor() {
@@ -22,8 +28,8 @@ export class GmailService extends BaseService {
                         required: false
                     }
                 ],
-                execute: async (params) => {
-                    return this.checkNewEmails(params);
+                execute: async (params, context) => {
+                    return this.checkNewEmails(params, context);
                 }
             }
         ];
@@ -52,11 +58,12 @@ export class GmailService extends BaseService {
                         required: true
                     }
                 ],
-                execute: async (params) => {
+                execute: async (params, context) => {
                     await this.sendMail(
                         params.to as string,
                         params.subject as string,
-                        params.body as string
+                        params.body as string,
+                        context
                     );
                 }
             },
@@ -77,10 +84,11 @@ export class GmailService extends BaseService {
                         required: true
                     }
                 ],
-                execute: async (params) => {
+                execute: async (params, context) => {
                     await this.replyToEmail(
                         params.thread_id as string,
-                        params.body as string
+                        params.body as string,
+                        context
                     );
                 }
             }
@@ -94,71 +102,169 @@ export class GmailService extends BaseService {
         console.log(`${this.name} service initialized`);
     }
 
+    // Helper method to create authenticated Gmail client
+    private getAuthenticatedGmailClient(accessToken: string) {
+        const auth = new google.auth.OAuth2();
+        auth.setCredentials({ access_token: accessToken });
+        return google.gmail({ version: "v1", auth });
+    }
+
     // Action implementations (trigger checks)
     private async checkNewEmails(
-        params: Record<string, unknown>
+        params: Record<string, unknown>,
+        context?: ServiceExecutionContext
     ): Promise<unknown> {
         console.log(`Checking for new emails with filters:`, params);
-        // Implementation would check Gmail API for new emails
-        // Return email data if found, null if not
+        // Check if user has Google OAuth token
+        if (!context || !context.userTokens.google)
+            throw new Error("Google OAuth token required to check emails");
+        try {
+            // Create authenticated Gmail client
+            const gmail = this.getAuthenticatedGmailClient(
+                context.userTokens.google
+            );
 
-        // Mock email data for demonstration
-        const mockEmail = {
-            threadId: "thread_abc123",
-            messageId: "msg_def456",
-            from: "sender@example.com",
-            to: "me@example.com",
-            subject: "New Email Subject",
-            body: "Email content here...",
-            timestamp: new Date().toISOString(),
-            labels: ["INBOX"]
-        };
+            // Get recent messages from inbox
+            const messagesResponse = await gmail.users.messages.list({
+                userId: "me",
+                labelIds: ["INBOX"],
+                maxResults: 10
+            });
+            const messages = messagesResponse.data.messages;
+            if (!messages || messages.length === 0) return null; // No new emails
+            // Get details of the most recent email
+            const latestMessage = messages[0];
+            if (!latestMessage.id) return null; // Message has no ID
+            const messageResponse = await gmail.users.messages.get({
+                userId: "me",
+                id: latestMessage.id
+            });
 
-        // Apply filters if provided
-        if (params.from_filter) {
-            const fromFilter = params.from_filter as string;
-            if (!mockEmail.from.includes(fromFilter)) {
-                return null; // No match
+            const messageData = messageResponse.data;
+            // Extract email data from headers
+            const headers = messageData.payload?.headers || [];
+            const fromHeader =
+                headers.find((h) => h.name === "From")?.value || "";
+            const subjectHeader =
+                headers.find((h) => h.name === "Subject")?.value || "";
+
+            // Apply filters if provided
+            if (params.from_filter) {
+                const fromFilter = params.from_filter as string;
+                if (!fromHeader.includes(fromFilter)) return null; // No match
             }
-            mockEmail.from = fromFilter; // Use filtered sender
-        }
-
-        if (params.subject_contains) {
-            const subjectFilter = params.subject_contains as string;
-            if (!mockEmail.subject.includes(subjectFilter)) {
-                return null; // No match
+            if (params.subject_contains) {
+                const subjectFilter = params.subject_contains as string;
+                if (!subjectHeader.includes(subjectFilter)) return null; // No match
             }
-            mockEmail.subject = `Email containing: ${subjectFilter}`;
+            // Return email data if filters match
+            return {
+                threadId: messageData.threadId,
+                messageId: messageData.id,
+                from: fromHeader,
+                subject: subjectHeader,
+                timestamp: messageData.internalDate
+                    ? new Date(parseInt(messageData.internalDate)).toISOString()
+                    : new Date().toISOString(),
+                snippet: messageData.snippet
+            };
+        } catch (error) {
+            console.error("Error checking Gmail:", error);
+            return null; // Don't trigger on API errors
         }
-
-        return mockEmail; // Trigger fired with email data
     }
 
     // Reaction implementations (actual actions)
-    async sendMail(to: string, subject: string, body: string): Promise<void> {
-        // Implementation for sending email
-        console.log(`Sending email to ${to} with subject: ${subject}`);
-        console.log(`Body: ${body}`);
-        // Add actual Gmail API call here
+    async sendMail(
+        to: string,
+        subject: string,
+        body: string,
+        context?: ServiceExecutionContext
+    ): Promise<void> {
+        // Check if user has Google OAuth token
+        if (!context || !context.userTokens.google)
+            throw new Error("Google OAuth token required to send emails");
+        try {
+            const gmail = this.getAuthenticatedGmailClient(
+                context.userTokens.google
+            ); // Create authenticated Gmail client
+            const email = [`To: ${to}`, `Subject: ${subject}`, "", body].join(
+                "\n"
+            ); // Create email message
+            const encodedEmail = Buffer.from(email) // Encode email as base64url
+                .toString("base64")
+                .replace(/\+/g, "-")
+                .replace(/\//g, "_")
+                .replace(/=+$/, "");
+            // Send email
+            await gmail.users.messages.send({
+                userId: "me",
+                requestBody: {
+                    raw: encodedEmail
+                }
+            });
+            console.log(
+                `Email sent successfully from ${context.userId} to ${to}`
+            );
+        } catch (error) {
+            console.error("Error sending email:", error);
+            throw new Error("Failed to send email");
+        }
     }
 
-    async replyToEmail(threadId: string, body: string): Promise<void> {
-        // Implementation for replying to email
-        console.log(`Replying to thread ${threadId}`);
-        console.log(`Body: ${body}`);
-        // Add actual Gmail API call here
-    }
-
-    async listEmails(maxResults = 10): Promise<unknown[]> {
-        // Implementation for listing emails
-        console.log(`Listing ${maxResults} emails`);
-        // Add actual Gmail API call here
-        return [];
-    }
-
-    async addLabel(emailId: string, label: string): Promise<void> {
-        // Implementation for adding label
-        console.log(`Adding label ${label} to email ${emailId}`);
-        // Add actual Gmail API call here
+    async replyToEmail(
+        threadId: string,
+        body: string,
+        context?: ServiceExecutionContext
+    ): Promise<void> {
+        // Check if user has Google OAuth token
+        if (!context || !context.userTokens.google)
+            throw new Error("Google OAuth token required to reply to emails");
+        try {
+            const gmail = this.getAuthenticatedGmailClient(
+                context.userTokens.google
+            ); // Create authenticated Gmail client
+            const thread = await gmail.users.threads.get({
+                userId: "me",
+                id: threadId
+            }); // Get the original thread to extract reply-to information
+            if (!thread.data.messages || thread.data.messages.length === 0)
+                throw new Error("Thread not found or empty");
+            const originalMessage = thread.data.messages[0]; // Get the first message to extract headers
+            const headers = originalMessage.payload?.headers || [];
+            const toHeader =
+                headers.find((h) => h.name === "From")?.value || "";
+            const subjectHeader =
+                headers.find((h) => h.name === "Subject")?.value || "";
+            const replySubject = subjectHeader.startsWith("Re:")
+                ? subjectHeader
+                : `Re: ${subjectHeader}`;
+            const email = [
+                `To: ${toHeader}`,
+                `Subject: ${replySubject}`,
+                `In-Reply-To: ${originalMessage.id}`,
+                `References: ${originalMessage.id}`,
+                "",
+                body
+            ].join("\n"); // Create reply message
+            const encodedEmail = Buffer.from(email) // Encode email as base64url
+                .toString("base64")
+                .replace(/\+/g, "-")
+                .replace(/\//g, "_")
+                .replace(/=+$/, "");
+            await gmail.users.messages.send({
+                userId: "me",
+                requestBody: {
+                    raw: encodedEmail,
+                    threadId: threadId
+                }
+            }); // Send reply
+            console.log(
+                `Reply sent successfully from ${context.userId} to thread ${threadId}`
+            );
+        } catch (error) {
+            console.error("Error replying to email:", error);
+            throw new Error("Failed to reply to email");
+        }
     }
 }
