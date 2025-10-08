@@ -106,7 +106,7 @@ router.get("/", verifyToken, async (req: Request, res: Response) => {
     try {
         const areas = await db
             .collection<AreaExecution>("areas")
-            .find({ userId: req.userId })
+            .find({ userId: new ObjectId(req.userId) })
             .toArray();
         res.status(200).json({ areas });
     } catch (error) {
