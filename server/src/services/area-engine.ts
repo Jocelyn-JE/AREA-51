@@ -2,6 +2,7 @@ import { getService, serviceRegistry } from "./index";
 import { db } from "../mongodb";
 import { ObjectId } from "mongodb";
 import { Parameter } from "./types";
+import { oauthTokenManager } from "./oauth-token-manager";
 
 // Enhanced Area type with parameters
 export type AreaExecution = {
@@ -54,6 +55,13 @@ export class AreaEngine {
         if (!area || !area.enabled)
             throw new Error(`Area ${areaId} not found or disabled`);
         try {
+            // Get user's OAuth tokens
+            const userTokens = await oauthTokenManager.getAllTokensForUser(area.userId);
+            const context = {
+                userId: area.userId,
+                userTokens
+            };
+
             // Get services
             const actionService = getService(area.actionServiceName);
             const reactionService = getService(area.reactionServiceName);
@@ -63,13 +71,14 @@ export class AreaEngine {
                 );
             }
 
-            // Execute action (check if trigger condition is met)
+            // Execute action (check if trigger condition is met) with user context
             console.log(
                 `Checking trigger: ${area.actionServiceName}.${area.actionName}`
             );
             const triggerResult = await actionService.executeAction(
                 area.actionName,
-                area.actionParameters
+                area.actionParameters,
+                context
             );
 
             // If trigger returns data (meaning condition was met), execute reaction
@@ -84,7 +93,8 @@ export class AreaEngine {
                 };
                 await reactionService.executeReaction(
                     area.reactionName,
-                    reactionParams
+                    reactionParams,
+                    context
                 );
                 await db.collection<AreaExecution>("areas").updateOne(
                     { _id: areaId },
