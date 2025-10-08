@@ -123,7 +123,7 @@ export class GmailService extends BaseService {
     private async checkNewEmails(
         params: Record<string, unknown>,
         context?: ServiceExecutionContext
-    ): Promise<unknown> {
+    ): Promise<unknown | null> {
         console.log(`Checking for new emails with filters:`, params);
         // Check if user has Google OAuth token
         if (!context || !context.userTokens.google) {
