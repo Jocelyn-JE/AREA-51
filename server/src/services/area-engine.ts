@@ -170,7 +170,7 @@ export class AreaEngine {
                 );
                 if (missingParams.length > 0) {
                     errors.push(
-                        `Missing required action parameters: ${missingParams.join(", ")}`
+                        `Missing required 'actionParameters': ${missingParams.join(", ")}`
                     );
                 }
             }
@@ -189,7 +189,7 @@ export class AreaEngine {
                 );
                 if (missingParams.length > 0) {
                     errors.push(
-                        `Missing required reaction parameters: ${missingParams.join(", ")}`
+                        `Missing required 'reactionParameters': ${missingParams.join(", ")}`
                     );
                 }
             }
