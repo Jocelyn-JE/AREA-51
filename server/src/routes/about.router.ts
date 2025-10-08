@@ -1,6 +1,30 @@
 import express from "express";
-import { db } from "../mongodb";
-import { Service, AboutInfo, ClientInfo, ServerInfo } from "../utils/db";
+import { serviceRegistry } from "../services";
+import {
+    ActionDefinition,
+    BaseService,
+    ReactionDefinition
+} from "../services/types";
+
+type ClientInfo = {
+    host: string;
+};
+
+type ServiceInfo = {
+    name: string;
+    actions: ActionDefinition[];
+    reactions: ReactionDefinition[];
+};
+
+type ServerInfo = {
+    current_time: number;
+    services: ServiceInfo[];
+};
+
+type AboutInfo = {
+    client: ClientInfo;
+    server: ServerInfo;
+};
 
 function getClientInfo(req: express.Request): ClientInfo {
     return {
@@ -8,25 +32,27 @@ function getClientInfo(req: express.Request): ClientInfo {
     };
 }
 
-async function getServerInfo(): Promise<ServerInfo> {
+function getServerInfo(): ServerInfo {
+    const services: ServiceInfo[] = Array.from(serviceRegistry.values()).map(
+        (service: BaseService) => ({
+            name: service.name,
+            actions: service.actionDefinitions,
+            reactions: service.reactionDefinitions
+        })
+    );
+
     return {
         current_time: Math.floor(Date.now() / 1000),
-        services: await getServices()
+        services
     };
 }
 
-async function getServices(): Promise<Service[]> {
-    const documents = await services.find().toArray();
-    return documents;
-}
-
 const router = express.Router();
-const services = db.collection<Service>("services");
 
 router.use("/", async (req, res) => {
     const aboutInfo: AboutInfo = {
         client: getClientInfo(req),
-        server: await getServerInfo()
+        server: getServerInfo()
     };
     res.status(200).json(aboutInfo);
 });

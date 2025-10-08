@@ -1,13 +1,16 @@
 import express from "express";
 import cors from "cors";
 import { connectToDb, closeDbConnection } from "./mongodb";
+import { initializeAllServices } from "./services";
+import { AreaEngine } from "./services/area-engine";
 
 // Routes
 import swaggerRouter from "./routes/swagger.router";
 import aboutRouter from "./routes/about.router";
 import registerRouter from "./routes/register.router";
 import loginRouter from "./routes/login.router";
-import authRouter from "./routes/auth.router";
+import googleAuthRouter from "./routes/google-auth.router";
+import areaRouter from "./routes/area.router";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -29,8 +32,10 @@ app.get("/about.json", aboutRouter);
 app.use("/api/register", registerRouter);
 // Login route
 app.use("/api/login", loginRouter);
-// Auth route
-app.use("/api/auth", authRouter);
+// Google Auth route
+app.use("/api/auth/google", googleAuthRouter);
+// Area route
+app.use("/api/areas", areaRouter);
 
 app.listen(port, () => {
     console.log(`Backend listening on port ${port}`);
@@ -42,22 +47,39 @@ function sleep(ms: number) {
     });
 }
 
+// AREA scheduler function
+function startAreaScheduler() {
+    const POLL_INTERVAL = 60000; // Check every minute
+    console.log(
+        `🔄 Starting AREA scheduler (checking every ${POLL_INTERVAL / 1000}s)`
+    );
+    setInterval(async () => {
+        try {
+            console.log("🔍 Checking areas...");
+            const engine = AreaEngine.getInstance();
+            await engine.executeAllAreas();
+        } catch (error) {
+            console.error("❌ Error in AREA scheduler:", error);
+        }
+    }, POLL_INTERVAL);
+}
+
 async function run() {
     try {
         while (!(await connectToDb())) {
             console.log("Retrying DB connection in 2 seconds...");
             await sleep(2000);
         }
+        // Initialize all services
+        await initializeAllServices();
+        // Start the AREA engine scheduler
+        startAreaScheduler();
         process.on("SIGINT", async () => {
             await closeDbConnection();
             console.log("Goodbye!");
             process.exit(0);
         });
-        setInterval(() => {
-            // Polling logic for background tasks can be added here
-            // Like checking for updates on external services for actions
-            // and firing the reactions accordingly
-        }, 5000); // Poll every 5 seconds (adjust as needed)
+        console.log("Server is running\nPress Ctrl+C to exit");
     } catch (err) {
         console.log("Error occurred: ", err);
         await closeDbConnection();

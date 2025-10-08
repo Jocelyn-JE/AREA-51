@@ -5,34 +5,8 @@ export type ClientInfo = {
     host: string;
 };
 
-export type Service = {
-    _id: ObjectId;
-    name: string;
-    actions: { name: string; description: string }[];
-    reactions: { name: string; description: string }[];
-};
-
-export type Area = {
-    _id?: ObjectId;
-    actionServiceId: ObjectId;
-    actionName: string;
-    actionOptions?: Record<string, unknown>;
-    reactionServiceId: ObjectId;
-    reactionName: string;
-    reactionOptions?: Record<string, unknown>;
-    userId: ObjectId;
-    createdAt: Date;
-};
-
-export type ServerInfo = {
-    current_time: number;
-    services: Service[];
-};
-
-export type AboutInfo = {
-    client: ClientInfo;
-    server: ServerInfo;
-};
+// Legacy Area type was removed.
+// New areas use AreaExecution type from services/area-engine.ts
 
 /**
  * Checks if a string is a valid MongoDB ObjectId.
