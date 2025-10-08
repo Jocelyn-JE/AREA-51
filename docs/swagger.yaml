@@ -2,12 +2,29 @@ openapi: 3.1.0
 info:
   title: AREA-51 API
   version: 1.0.0
-  description: API documentation for AREA project
+  description: |
+    API documentation for AREA project
+servers:
+  - url: http://localhost:3000
+    description: Development server
+tags:
+  - name: System Information
+    description: Endpoints for retrieving system metadata and service information
+  - name: User Authentication
+    description: Endpoints for user registration and login with traditional email/password
+  - name: Google OAuth
+    description: Endpoints for Google OAuth integration and service authorization
+  - name: AREA Management
+    description: Endpoints for creating, managing, and controlling AREA automations
+  - name: Testing & Development
+    description: Endpoints for testing and debugging reactions and services
 paths:
   /about.json:
     get:
+      tags:
+        - System Information
       summary: Get project metadata
-      description: Returns metadata about the AREA project including name, version, description and available services.
+      description: Returns metadata about the AREA project including client information, server data, and available services with their actions and reactions.
       responses:
         '200':
           description: Successful response
@@ -16,17 +33,28 @@ paths:
               schema:
                 type: object
                 properties:
-                  name:
-                    type: string
-                    example: AREA-51
-                  version:
-                    type: string
-                    example: 1.0.0
-                  description:
-                    type: string
-                    example: API for AREA project metadata
+                  client:
+                    type: object
+                    properties:
+                      host:
+                        type: string
+                        example: localhost
+                  server:
+                    type: object
+                    properties:
+                      current_time:
+                        type: integer
+                        description: Unix timestamp of current server time
+                        example: 1759894647
+                      services:
+                        type: array
+                        description: List of available services with their actions and reactions
+                        items:
+                          $ref: '#/components/schemas/Service'
   /api/register:
     post:
+      tags:
+        - User Authentication
       summary: Register a new user
       description: Register a new user with email, username, and password. Returns the created user's ID upon successful registration.
       requestBody:
@@ -66,6 +94,8 @@ paths:
           $ref: '#/components/responses/Error500'
   /api/login:
     post:
+      tags:
+        - User Authentication
       summary: Login a user
       description: Login using either email or username along with password. Returns a JWT token valid for 1 hour upon successful authentication.
       requestBody:
@@ -115,6 +145,8 @@ paths:
           $ref: '#/components/responses/Error500'
   /api/auth/google/verify:
     post:
+      tags:
+        - Google OAuth
       summary: Verify Google token and authenticate user
       description: Verify a Google OAuth token, create a new user if not existing, and return a JWT token for authentication.
       requestBody:
@@ -168,6 +200,313 @@ paths:
           $ref: '#/components/responses/Error403'
         '500':
           $ref: '#/components/responses/Error500'
+  /api/auth/google/authorize:
+    get:
+      tags:
+        - Google OAuth
+      summary: Get Google OAuth authorization URL
+      description: Retrieve the URL to redirect users for Google OAuth authentication.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response with authorization URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authUrl:
+                    type: string
+                    format: uri
+                    example: https://accounts.google.com/o/oauth2/auth?client_id=...
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /api/auth/google/callback:
+    get:
+      tags:
+        - Google OAuth
+      summary: Handle Google OAuth callback
+      description: Handle the OAuth2 callback from Google after user authorization. Exchanges authorization code for tokens and stores them.
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Authorization code from Google
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+          description: User ID passed in state parameter
+      responses:
+        '302':
+          description: Redirect to frontend with success or error status
+        '400':
+          description: Missing authorization code or user ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/areas:
+    post:
+      tags:
+        - AREA Management
+      summary: Create a new area
+      description: Create a new AREA (Action-Reaction) automation with specified action and reaction configurations.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - actionServiceName
+                - actionName
+                - reactionServiceName
+                - reactionName
+              properties:
+                actionServiceName:
+                  type: string
+                  example: Gmail
+                  description: Name of the service that provides the action
+                actionName:
+                  type: string
+                  example: new_email
+                  description: Name of the action to trigger on
+                actionParameters:
+                  type: object
+                  description: Parameters for configuring the action
+                  example: {"from_filter": "boss@company.com"}
+                reactionServiceName:
+                  type: string
+                  example: Gmail
+                  description: Name of the service that provides the reaction
+                reactionName:
+                  type: string
+                  example: send_email
+                  description: Name of the reaction to execute
+                reactionParameters:
+                  type: object
+                  description: Parameters for configuring the reaction
+                  example: {"to": "assistant@company.com", "subject": "Boss email received"}
+                name:
+                  type: string
+                  description: Optional name for the area
+                description:
+                  type: string
+                  description: Optional description for the area
+      responses:
+        '201':
+          description: Area created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Area created successfully
+                  area:
+                    $ref: '#/components/schemas/Area'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+    get:
+      tags:
+        - AREA Management
+      summary: Get user's areas
+      description: Retrieve all areas created by the authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of user's areas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  areas:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Area'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /api/areas/{id}/toggle:
+    put:
+      tags:
+        - AREA Management
+      summary: Enable or disable an area
+      description: Toggle the enabled status of a specific area.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ObjectId'
+          description: Area ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - enabled
+              properties:
+                enabled:
+                  type: boolean
+                  description: Whether the area should be enabled
+                  example: true
+      responses:
+        '200':
+          description: Area status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Area enabled successfully
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /api/areas/{id}/execute:
+    post:
+      tags:
+        - AREA Management
+      summary: Manually execute an area
+      description: Manually trigger the execution of a specific area.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ObjectId'
+          description: Area ID
+      responses:
+        '200':
+          description: Area executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Area executed successfully
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /api/areas/{id}:
+    delete:
+      tags:
+        - AREA Management
+      summary: Delete an area
+      description: Delete a specific area owned by the authenticated user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ObjectId'
+          description: Area ID
+      responses:
+        '200':
+          description: Area deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Area deleted successfully
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /api/areas/test/reaction:
+    post:
+      tags:
+        - Testing & Development
+      summary: Test a reaction
+      description: Test the execution of a specific reaction with given parameters.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - serviceName
+                - reactionName
+              properties:
+                serviceName:
+                  type: string
+                  example: Gmail
+                  description: Name of the service
+                reactionName:
+                  type: string
+                  example: send_email
+                  description: Name of the reaction to test
+                parameters:
+                  type: object
+                  description: Parameters for the reaction
+                  example: {"to": "test@example.com", "subject": "Test", "body": "Test message"}
+      responses:
+        '200':
+          description: Reaction executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Reaction executed successfully
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+  
 
 components:
   schemas:
@@ -191,6 +530,168 @@ components:
       pattern: '^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$'
       description: JSON Web Token for authentication
       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1MDdmMWY3N2JjZjg2Y2Q3OTk0MzkwMTEiLCJpYXQiOjE2MTYyMzkwMjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+    Service:
+      type: object
+      description: A service with available actions and reactions
+      required:
+        - name
+        - actions
+        - reactions
+      properties:
+        name:
+          type: string
+          description: Name of the service
+          example: Gmail
+        actions:
+          type: array
+          description: List of available actions (triggers) for this service
+          items:
+            $ref: '#/components/schemas/Action'
+        reactions:
+          type: array
+          description: List of available reactions for this service
+          items:
+            $ref: '#/components/schemas/Reaction'
+    Action:
+      type: object
+      description: An action (trigger) that can be configured for a service
+      required:
+        - name
+        - description
+        - parameters
+      properties:
+        name:
+          type: string
+          description: Name of the action
+          example: new_email
+        description:
+          type: string
+          description: Description of what triggers this action
+          example: Triggered when a new email is received
+        parameters:
+          type: array
+          description: Configuration parameters for this action
+          items:
+            $ref: '#/components/schemas/Parameter'
+    Reaction:
+      type: object
+      description: A reaction that can be executed by a service
+      required:
+        - name
+        - description
+        - parameters
+      properties:
+        name:
+          type: string
+          description: Name of the reaction
+          example: send_email
+        description:
+          type: string
+          description: Description of what this reaction does
+          example: Send an email
+        parameters:
+          type: array
+          description: Parameters required for this reaction
+          items:
+            $ref: '#/components/schemas/Parameter'
+    Parameter:
+      type: object
+      description: A parameter definition for actions or reactions
+      required:
+        - name
+        - type
+        - description
+        - required
+      properties:
+        name:
+          type: string
+          description: Parameter name
+          example: to
+        type:
+          type: string
+          description: Parameter type
+          enum: [string, email, select]
+          example: email
+        description:
+          type: string
+          description: Parameter description
+          example: Recipient email address
+        required:
+          type: boolean
+          description: Whether this parameter is required
+          example: true
+        options:
+          type: array
+          description: Available options for select type parameters
+          items:
+            type: string
+          example: ["reader", "writer", "commenter", "owner"]
+        defaultValue:
+          type: string
+          description: Default value for optional parameters
+          example: reader
+    Area:
+      type: object
+      description: An AREA (Action-Reaction) automation
+      required:
+        - _id
+        - actionServiceName
+        - actionName
+        - actionParameters
+        - reactionServiceName
+        - reactionName
+        - reactionParameters
+        - userId
+        - enabled
+        - createdAt
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+          description: Unique identifier for the area
+        actionServiceName:
+          type: string
+          description: Name of the service that provides the action
+          example: Gmail
+        actionName:
+          type: string
+          description: Name of the action to trigger on
+          example: new_email
+        actionParameters:
+          type: object
+          description: Parameters for configuring the action
+          example: {"from_filter": "boss@company.com"}
+        reactionServiceName:
+          type: string
+          description: Name of the service that provides the reaction
+          example: Gmail
+        reactionName:
+          type: string
+          description: Name of the reaction to execute
+          example: send_email
+        reactionParameters:
+          type: object
+          description: Parameters for configuring the reaction
+          example: {"to": "assistant@company.com", "subject": "Boss email received"}
+        userId:
+          $ref: '#/components/schemas/ObjectId'
+          description: ID of the user who owns this area
+        enabled:
+          type: boolean
+          description: Whether the area is currently enabled
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          description: When the area was created
+          example: "2023-10-08T10:30:00Z"
+        name:
+          type: string
+          description: Optional name for the area
+          example: "Email forwarding from boss"
+        description:
+          type: string
+          description: Optional description for the area
+          example: "Forward emails from boss to assistant"
     ErrorResponse:
       type: object
       description: Standard error payload
@@ -238,3 +739,26 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token for API authentication
+        
+        **Auto-Authentication Instructions:**
+        1. First, use the `/api/login` or `/api/auth/google/verify` endpoint
+        2. Copy the `token` from the response
+        3. Click the "Authorize" button above (here)
+        4. In the `Value:` field enter: `<your-token>` (replace <your-token> with the actual token)
+        5. All subsequent requests will be automatically authenticated
+        
+        **Alternative:** Use the browser console to automatically set the token:
+        ```javascript
+        // After successful login, run this in browser console:
+        const token = "your-jwt-token-here";
+        document.querySelector('[data-name="bearerAuth"] input').value = token;
+        document.querySelector('.auth-btn-wrapper .btn-done').click();
+        ```
+        ```
