@@ -7,7 +7,7 @@ module.exports = {
         tsconfigRootDir: __dirname
     },
     plugins: ["@typescript-eslint"],
-    ignorePatterns: [".eslintrc.js"],
+    ignorePatterns: [".eslintrc.js", "init-mongo.js"],
     rules: {
         indent: ["error", 4],
         "@typescript-eslint/indent": ["error", 4]
