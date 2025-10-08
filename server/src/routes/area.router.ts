@@ -130,7 +130,7 @@ router.put("/:id/toggle", verifyToken, async (req: Request, res: Response) => {
         const result = await db
             .collection<AreaExecution>("areas")
             .updateOne(
-                { _id: new ObjectId(areaId), userId: req.userId },
+                { _id: new ObjectId(areaId), userId: new ObjectId(req.userId) },
                 { $set: { enabled } }
             );
         if (result.matchedCount === 0)
@@ -153,23 +153,16 @@ router.post(
 
         try {
             const areaId = req.params.id;
-            if (!ObjectId.isValid(areaId)) {
+            if (!ObjectId.isValid(areaId))
                 return res.status(400).json({ error: "Invalid area ID" });
-            }
-
             // Verify area belongs to user
             const area = await db.collection<AreaExecution>("areas").findOne({
                 _id: new ObjectId(areaId),
                 userId: new ObjectId(req.userId)
             });
-
-            if (!area) {
-                return res.status(404).json({ error: "Area not found" });
-            }
-
+            if (!area) return res.status(404).json({ error: "Area not found" });
             // Execute the area
             await areaEngine.executeArea(new ObjectId(areaId));
-
             res.json({ message: "Area executed successfully" });
         } catch (error) {
             console.error("Error executing area:", error);
@@ -192,7 +185,7 @@ router.delete("/:id", verifyToken, async (req: Request, res: Response) => {
             return res.status(400).json({ error: "Invalid area ID" });
         const result = await db.collection<AreaExecution>("areas").deleteOne({
             _id: new ObjectId(areaId),
-            userId: req.userId
+            userId: new ObjectId(req.userId)
         });
         if (result.deletedCount === 0)
             return res.status(404).json({ error: "Area not found" });
