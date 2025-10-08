@@ -60,7 +60,6 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
             });
         }
         if (!reactionService) {
-            // Same for reaction service
             return res.status(400).json({
                 error: `Reaction service '${reactionServiceName}' not found`
             });
