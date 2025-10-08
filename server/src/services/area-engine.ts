@@ -129,35 +129,6 @@ export class AreaEngine {
     }
 
     /**
-     * Monitor all enabled areas (this would be called periodically)
-     */
-    async monitorAreas(): Promise<void> {
-        const enabledAreas = await db
-            .collection<AreaExecution>("areas")
-            .find({ enabled: true })
-            .toArray();
-
-        console.log(`Monitoring ${enabledAreas.length} enabled areas`);
-        // Process in batches of 10 to avoid overwhelming the system
-        for (let i = 0; i < enabledAreas.length; i += 10) {
-            const batch = enabledAreas.slice(i, i + 10);
-            const promises = batch.map(async (area) => {
-                if (!area._id) {
-                    console.error("Area missing _id, skipping execution");
-                    return Promise.resolve();
-                }
-                try {
-                    return await this.executeArea(area._id);
-                } catch (error) {
-                    console.error(`Failed to execute area ${area._id}:`, error);
-                    return Promise.resolve();
-                }
-            });
-            await Promise.all(promises);
-        }
-    }
-
-    /**
      * Validate area parameters against service definitions
      */
     async validateArea(area: AreaExecution): Promise<string[]> {
