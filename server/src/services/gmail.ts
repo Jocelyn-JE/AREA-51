@@ -69,24 +69,34 @@ export class GmailService extends BaseService {
             },
             {
                 name: "reply_to_email",
-                description: "Reply to an email",
+                description: "Reply to an email in a specific thread",
                 parameters: [
                     {
                         name: "thread_id",
                         type: "string",
-                        description: "Thread ID to reply to",
-                        required: true
+                        description:
+                            "Thread ID to reply to (auto-filled from trigger data if not provided)",
+                        required: false
                     },
                     {
                         name: "body",
                         type: "string",
-                        description: "Reply content",
+                        description: "Reply message body",
                         required: true
                     }
                 ],
                 execute: async (params, context) => {
+                    // Get thread_id from params or trigger data
+                    const threadId =
+                        (params.thread_id as string) ||
+                        (params.triggerData as { threadId?: string })?.threadId;
+                    if (!threadId) {
+                        throw new Error(
+                            "thread_id must be provided either as parameter or from trigger data"
+                        );
+                    }
                     await this.replyToEmail(
-                        params.thread_id as string,
+                        threadId,
                         params.body as string,
                         context
                     );
