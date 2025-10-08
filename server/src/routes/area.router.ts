@@ -55,7 +55,6 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
         const reactionService = getService(reactionServiceName);
 
         if (!actionService) {
-            // If action service is not found it will be undefined
             return res.status(400).json({
                 error: `Action service '${actionServiceName}' not found`
             });
