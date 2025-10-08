@@ -73,7 +73,7 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
             reactionServiceName,
             reactionName,
             reactionParameters: reactionParameters || {},
-            userId: req.userId,
+            userId: new ObjectId(req.userId),
             enabled: true, // Areas are enabled by default
             createdAt: new Date()
         };
