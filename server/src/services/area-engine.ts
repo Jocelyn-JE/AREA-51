@@ -142,7 +142,10 @@ export class AreaEngine {
         for (let i = 0; i < enabledAreas.length; i += 10) {
             const batch = enabledAreas.slice(i, i + 10);
             const promises = batch.map(async (area) => {
-                if (!area._id) return Promise.resolve();
+                if (!area._id) {
+                    console.error("Area missing _id, skipping execution");
+                    return Promise.resolve();
+                }
                 try {
                     return await this.executeArea(area._id);
                 } catch (error) {
