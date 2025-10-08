@@ -12,6 +12,9 @@ services:
       - ./docs:/docs
     env_file:
       - .env
+    depends_on:
+      - mongo-db
+    restart: always
   client_web:
     container_name: web-client
     build:
@@ -23,6 +26,8 @@ services:
     restart: always
     networks:
       - frontend
+    depends_on:
+      - server
   client_mobile:
     container_name: mobile-client
     build:
