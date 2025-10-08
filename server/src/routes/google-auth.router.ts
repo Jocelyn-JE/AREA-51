@@ -97,10 +97,10 @@ router.post("/verify", async (req, res) => {
 router.get("/authorize", verifyToken, async (req, res) => {
     if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
     if (
-        OAuthTokenManager.getInstance().getTokensForUser(
-            req.userId,
+        (await OAuthTokenManager.getInstance().getTokensForUser(
+            new ObjectId(req.userId),
             "google"
-        ) !== null
+        )) !== null
     )
         return res
             .status(400)
