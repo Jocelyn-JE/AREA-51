@@ -37,7 +37,7 @@ class _ConfirmNamingScreenState extends State<ConfirmNamingScreen> {
         title: const Text('Name Your Area'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,7 +128,7 @@ class _ConfirmNamingScreenState extends State<ConfirmNamingScreen> {
                 });
               },
             ),
-            const Spacer(),
+            const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

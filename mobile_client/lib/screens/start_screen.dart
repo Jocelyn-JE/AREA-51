@@ -7,12 +7,14 @@ class StartScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Add some top spacing to center content when not scrolling
+              SizedBox(height: MediaQuery.of(context).size.height * 0.1),
               // Logo/Icon
               const Icon(
                 Icons.auto_awesome,
@@ -110,6 +112,8 @@ class StartScreen extends StatelessWidget {
                   _buildFeature(Icons.notifications, 'Get\nNotified'),
                 ],
               ),
+              // Add some bottom spacing
+              SizedBox(height: MediaQuery.of(context).size.height * 0.1),
             ],
           ),
         ),

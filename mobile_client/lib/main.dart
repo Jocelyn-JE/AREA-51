@@ -11,6 +11,7 @@ import 'screens/confirm_naming_screen.dart';
 import 'screens/my_areas_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'screens/token_display_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -41,6 +42,7 @@ class MyApp extends StatelessWidget {
         '/my-areas': (context) => const MyAreasScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/notifications': (context) => const NotificationsScreen(),
+        '/token-display': (context) => const TokenDisplayScreen(),
       },
       debugShowCheckedModeBanner: false,
     );

@@ -10,7 +10,7 @@ class NewAreaScreen extends StatelessWidget {
         title: const Text('Create New Area'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -78,32 +78,30 @@ class NewAreaScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildTemplateCard(
-                    context,
-                    'GitHub to Discord',
-                    'Send Discord message when GitHub issue is created',
-                    Icons.code,
-                    Icons.chat,
-                  ),
-                  _buildTemplateCard(
-                    context,
-                    'Email to Spotify',
-                    'Add song to playlist when receiving specific email',
-                    Icons.email,
-                    Icons.music_note,
-                  ),
-                  _buildTemplateCard(
-                    context,
-                    'Weather Alert',
-                    'Send notification when weather conditions change',
-                    Icons.cloud,
-                    Icons.notifications,
-                  ),
-                ],
-              ),
+            Column(
+              children: [
+                _buildTemplateCard(
+                  context,
+                  'GitHub to Discord',
+                  'Send Discord message when GitHub issue is created',
+                  Icons.code,
+                  Icons.chat,
+                ),
+                _buildTemplateCard(
+                  context,
+                  'Email to Spotify',
+                  'Add song to playlist when receiving specific email',
+                  Icons.email,
+                  Icons.music_note,
+                ),
+                _buildTemplateCard(
+                  context,
+                  'Weather Alert',
+                  'Send notification when weather conditions change',
+                  Icons.cloud,
+                  Icons.notifications,
+                ),
+              ],
             ),
           ],
         ),

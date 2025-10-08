@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_bottom_nav.dart';
+import '../services/google_auth_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -20,8 +21,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.token),
             onPressed: () {
+              Navigator.pushNamed(context, '/token-display');
+            },
+            tooltip: 'View OAuth Tokens',
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
@@ -36,12 +44,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: const Text('Cancel'),
                       ),
                       TextButton(
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.of(context).pop();
-                          Navigator.of(context).pushNamedAndRemoveUntil(
-                            '/start',
-                            (route) => false,
-                          );
+                          // Sign out from Google
+                          await GoogleAuthService.signOut();
+                          if (context.mounted) {
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/start',
+                              (route) => false,
+                            );
+                          }
                         },
                         child: const Text('Logout'),
                       ),

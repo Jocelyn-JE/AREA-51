@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/google_auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +14,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Debug method removed because GoogleAuthService.printDebugInfo() does not exist
+  }
 
   @override
   void dispose() {
@@ -62,11 +69,141 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      print('🔄 Login Screen: Starting Google Sign-In...');
+      final user = await GoogleAuthService.signInWithGoogle();
+      
+      if (user != null && mounted) {
+        print('✅ Login Screen: Sign-in successful!');
+        // Get token information
+        final tokenInfo = GoogleAuthService.getTokenInfo();
+        
+        // Show token dialog before navigating
+        await _showTokenDialog(tokenInfo);
+        
+        // Navigate to dashboard screen
+        Navigator.of(context).pushReplacementNamed('/dashboard');
+      } else if (mounted) {
+        print('❌ Login Screen: Sign-in returned null (user canceled or failed)');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google Sign-In was canceled or failed'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (error) {
+      print('💥 Login Screen Error: $error');
+      if (mounted) {
+        String errorMessage = 'Google Sign-In failed';
+        
+        if (error.toString().contains('10:')) {
+          errorMessage = 'OAuth not configured. Check Google Cloud Console setup.';
+        } else if (error.toString().contains('12501:')) {
+          errorMessage = 'Please sign in to your Google account first.';
+        } else if (error.toString().contains('7:')) {
+          errorMessage = 'Network error. Check your internet connection.';
+        } else {
+          errorMessage = 'Google Sign-In failed: ${error.toString()}';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(errorMessage),
+                const SizedBox(height: 4),
+                Text(
+                  'Check console logs for detailed error info',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showTokenDialog(Map<String, dynamic> tokenInfo) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('OAuth Token Information'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Access Token:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                SelectableText(
+                  tokenInfo['accessToken'] ?? 'No access token',
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'ID Token:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                SelectableText(
+                  tokenInfo['idToken'] ?? 'No ID token',
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'User Information:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                if (tokenInfo['user'] != null) ...[
+                  Text('Email: ${tokenInfo['user']['email']}'),
+                  Text('Name: ${tokenInfo['user']['displayName']}'),
+                  Text('ID: ${tokenInfo['user']['id']}'),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
@@ -160,6 +297,48 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Login',
                           style: TextStyle(fontSize: 16),
                         ),
+                ),
+                const SizedBox(height: 16),
+
+                // Divider
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Google Sign-In Button
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _handleGoogleSignIn,
+                  icon: Image.network(
+                    'https://developers.google.com/identity/images/g-logo.png',
+                    height: 20,
+                    width: 20,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.account_circle,
+                      size: 20,
+                    ),
+                  ),
+                  label: const Text('Continue with Google'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    side: BorderSide(color: Colors.grey.shade300),
+                  ),
                 ),
                 const SizedBox(height: 16),
 
