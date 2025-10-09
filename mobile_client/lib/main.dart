@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_client/services/google_auth_service.dart';
 import 'screens/start_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
@@ -14,6 +15,7 @@ import 'screens/notifications_screen.dart';
 import 'screens/token_display_screen.dart';
 
 void main() {
+  GoogleAuthService.initialize();
   runApp(const MyApp());
 }
 
