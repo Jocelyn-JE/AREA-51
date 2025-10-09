@@ -26,9 +26,9 @@ class _TokenDisplayScreenState extends State<TokenDisplayScreen> {
     });
 
     try {
-      final tokenInfo = GoogleAuthService.getTokenInfo();
+      final tokenInfo = await GoogleAuthService.getTokenInfo();
       final userProfile = await GoogleAuthService.getUserProfile();
-      
+
       setState(() {
         _tokenInfo = tokenInfo;
         _userProfile = userProfile;
@@ -42,38 +42,6 @@ class _TokenDisplayScreenState extends State<TokenDisplayScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to load token info: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _refreshToken() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await GoogleAuthService.refreshToken();
-      await _loadTokenInfo();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Token refreshed successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to refresh token: $error'),
             backgroundColor: Colors.red,
           ),
         );
@@ -129,10 +97,7 @@ class _TokenDisplayScreenState extends State<TokenDisplayScreen> {
               ),
               child: SelectableText(
                 token ?? 'No token available',
-                style: const TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 12,
-                ),
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
               ),
             ),
           ],
@@ -172,9 +137,10 @@ class _TokenDisplayScreenState extends State<TokenDisplayScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              ..._userProfile!.entries.map((entry) => 
-                _buildInfoRow(entry.key, entry.value?.toString() ?? 'N/A'),
-              ).toList(),
+              ..._userProfile!.entries.map(
+                (entry) =>
+                    _buildInfoRow(entry.key, entry.value?.toString() ?? 'N/A'),
+              ),
             ],
           ],
         ),
@@ -213,18 +179,9 @@ class _TokenDisplayScreenState extends State<TokenDisplayScreen> {
         title: const Text('OAuth Token Information'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _isLoading ? null : _refreshToken,
-            tooltip: 'Refresh Token',
-          ),
-        ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -240,20 +197,20 @@ class _TokenDisplayScreenState extends State<TokenDisplayScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  
-                  _buildTokenCard('Access Token', _tokenInfo?['accessToken']),
-                  
+
                   _buildTokenCard('ID Token', _tokenInfo?['idToken']),
-                  
+
                   _buildUserInfoCard(),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   ElevatedButton.icon(
                     onPressed: () async {
                       await GoogleAuthService.signOut();
                       if (mounted) {
-                        Navigator.of(context).pushReplacementNamed('/login');
+                        Navigator.of(
+                          context,
+                        ).pushNamedAndRemoveUntil('/login', (route) => false);
                       }
                     },
                     icon: const Icon(Icons.logout),

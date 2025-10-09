@@ -77,12 +77,12 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       print('🔄 Login Screen: Starting Google Sign-In...');
       final user = await GoogleAuthService.signInWithGoogle();
-      print('${user} Login Screen: Google Sign-In completed.');
+      print('$user Login Screen: Google Sign-In completed.');
 
       if (user != null && mounted) {
         print('✅ Login Screen: Sign-in successful!');
         // Get token information
-        final tokenInfo = GoogleAuthService.getTokenInfo();
+        final tokenInfo = await GoogleAuthService.getTokenInfo();
 
         // Show token dialog before navigating
         await _showTokenDialog(tokenInfo);
@@ -159,15 +159,6 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Access Token:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                SelectableText(
-                  tokenInfo['accessToken'] ?? 'No access token',
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                ),
                 const SizedBox(height: 16),
                 const Text(
                   'ID Token:',

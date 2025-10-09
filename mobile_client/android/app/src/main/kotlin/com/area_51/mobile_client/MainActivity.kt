@@ -1,4 +1,4 @@
-package com.example.mobile_client
+package com.area_51.mobile_client
 
 import io.flutter.embedding.android.FlutterActivity
 
