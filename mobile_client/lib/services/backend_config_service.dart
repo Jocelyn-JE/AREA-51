@@ -2,8 +2,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class BackendConfigService {
   static const String _backendUrlKey = 'backend_url';
-  static const String _defaultBackendUrl = 'http://localhost:8080'; // Default for development
-  
+  static const String _defaultBackendUrl = 'http://localhost:3000';
+
   static String _currentBackendUrl = _defaultBackendUrl;
 
   /// Get the current backend URL
@@ -67,11 +67,11 @@ class BackendConfigService {
   /// Get a list of common backend URLs for development
   static List<String> getCommonUrls() {
     return [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://10.0.2.2:3000',
       'http://localhost:8080',
-      'http://127.0.0.1:8080',
-      'http://10.0.2.2:8080', // Android emulator localhost
-      'https://your-domain.com',
-      'https://api.your-domain.com',
+      'https://api.area51.com',
     ];
   }
 }
