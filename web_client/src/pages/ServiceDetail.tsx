@@ -31,27 +31,27 @@ function ServiceDetail() {
 
   useEffect(() => {
     const fetchServices = async () => {
-        try {
+      try {
         const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/about.json`);
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
         const data: AboutResponse = await response.json();
         const foundService = data.server.services.find(
-            s => s.name.toLowerCase() === serviceName?.toLowerCase()
+          s => s.name.toLowerCase() === serviceName?.toLowerCase()
         );
         if (!foundService) {
-            throw new Error("Service not found");
+          throw new Error("Service not found");
         }
 
         setService(foundService);
-        } catch (err) {
+      } catch (err) {
         setError("Failed to load service details. Please try again later.");
         console.error(err);
-        } finally {
+      } finally {
         setLoading(false);
-        }
+      }
     };
 
     fetchServices();
