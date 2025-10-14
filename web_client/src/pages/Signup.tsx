@@ -24,7 +24,7 @@ function Signup() {
     }
 
     try {
-      const registerRes = await fetch("http://localhost:3000/api/register", {
+      const registerRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, username, password }),
@@ -35,7 +35,7 @@ function Signup() {
         throw new Error(registerData.error || "Registration failed");
       }
 
-      const loginRes = await fetch("http://localhost:3000/api/login", {
+      const loginRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -130,7 +130,7 @@ function Signup() {
                 </div>
                 <GoogleLogin
                     onSuccess={(credentialResponse) => {
-                        axios.post("http://localhost:3000/api/auth/google/verify", {
+                        axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/google/verify`, {
                             token: credentialResponse.credential
                         })
                         .then(response => {
