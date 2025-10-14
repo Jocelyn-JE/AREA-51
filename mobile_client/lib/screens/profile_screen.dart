@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_bottom_nav.dart';
+import 'backend_config_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -123,6 +124,18 @@ class ProfileScreen extends StatelessWidget {
             Expanded(
               child: ListView(
                 children: [
+                  _buildMenuItem(
+                    icon: Icons.settings_ethernet,
+                    title: 'Backend Configuration',
+                    subtitle: 'Configure backend server URL',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const BackendConfigScreen(),
+                        ),
+                      );
+                    },
+                  ),
                   _buildMenuItem(
                     icon: Icons.notifications,
                     title: 'Notifications',

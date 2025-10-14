@@ -51,8 +51,8 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
         getByName("debug") {
-            // Use release signing for debug builds to get consistent SHA-1
-            signingConfig = signingConfigs.getByName("release")
+            // Use default debug keystore for debug builds
+            // signingConfig = signingConfigs.getByName("debug") // Use default
         }
         getByName("profile") {
             signingConfig = signingConfigs.getByName("release")
