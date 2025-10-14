@@ -384,13 +384,20 @@ export class GoogleDriveService extends BaseService {
         const fileId = params["file_id"] as string;
         if (!fileId) throw new Error("file_id parameter is required");
         try {
-            const res = await drive.permissions.list({
+            // Fetch file metadata to get owners and permissions
+            const res = await drive.files.get({
                 fileId,
-                fields: "permissions"
+                fields: "owners, permissions"
             });
             const permissions = res.data.permissions || [];
+            const owners = res.data.owners || [];
+            const ownerEmails = owners.map((o) => o.emailAddress).filter(Boolean);
             const isShared = permissions.some(
-                (p) => p.role === "reader" || p.role === "writer"
+                (p) =>
+                    (p.type === "user" || p.type === "group") &&
+                    p.role !== "owner" &&
+                    p.emailAddress &&
+                    !ownerEmails.includes(p.emailAddress)
             );
             console.log(`File ${fileId} is shared: ${isShared}`);
             return isShared;
