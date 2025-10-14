@@ -9,10 +9,10 @@ import "./index.css";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 
-const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 if (!CLIENT_ID) {
-  throw new Error("Missing Google OAuth client ID. Please set REACT_APP_GOOGLE_CLIENT_ID in your environment.");
+  throw new Error("Missing Google OAuth client ID. Please set VITE_GOOGLE_CLIENT_ID in your environment.");
 }
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
