@@ -358,9 +358,10 @@ export class GoogleDriveService extends BaseService {
             }
             if (modifiedTime > this.lastCheck) {
                 console.log(`File ${fileId} was modified after lastCheck`);
-                return null;
+                this.lastCheck = modifiedTime;
+                return file;
             }
-            return file;
+            return null;
         } catch (err) {
             console.error("Error checking file modified time", err);
             return null;
