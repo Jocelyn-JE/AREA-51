@@ -8,6 +8,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import "./index.css";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
+import ServiceDetail from "./pages/ServiceDetail";
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -23,6 +24,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             {/* Redirect `/` to `/explore` */}
             <Route path="/" element={<Navigate to="/explore" replace />} />
             <Route path="/explore" element={<Explore />} />
+
+            <Route path="/service/:serviceName" element={<ServiceDetail />} />
 
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
