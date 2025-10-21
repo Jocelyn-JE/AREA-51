@@ -12,8 +12,8 @@ servers:
 tags:
   - name: System Information
     description: Endpoints for retrieving system metadata and service information
-  - name: User Authentication
-    description: Endpoints for user registration and login with traditional email/password
+  - name: User Related
+    description: Endpoints for user registration, login with traditional email/password and user information retrieval
   - name: Google OAuth
     description: Endpoints for Google OAuth integration and service authorization
   - name: GitHub OAuth
@@ -58,7 +58,7 @@ paths:
   /api/register:
     post:
       tags:
-        - User Authentication
+        - User Related
       summary: Register a new user
       description: Register a new user with email, username, and password. Returns the created user's ID upon successful registration.
       requestBody:
@@ -99,7 +99,7 @@ paths:
   /api/login:
     post:
       tags:
-        - User Authentication
+        - User Related
       summary: Login a user
       description: Login using either email or username along with password. Returns a JWT token valid for 1 hour upon successful authentication.
       requestBody:
@@ -145,6 +145,36 @@ paths:
           $ref: "#/components/responses/Error400"
         "401":
           $ref: "#/components/responses/Error401"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /api/users/info:
+    get:
+      tags:
+        - User Related
+      summary: Get authenticated user information
+      description: Retrieve information about the authenticated user using the provided JWT token.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successful response with user information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    $ref: "#/components/schemas/ObjectId"
+                  email:
+                    type: string
+                    format: email
+                    example: user123@example.com
+                  username:
+                    type: string
+                    example: user123
+                  role:
+                    type: string
+                    example: user
         "500":
           $ref: "#/components/responses/Error500"
   /api/auth/google/verify:
@@ -232,7 +262,7 @@ paths:
     get:
       tags:
         - Google OAuth
-      summary: Handle Google OAuth callback
+      summary: Handle Google OAuth callback (called by Google after user authorization)
       description: Handle the OAuth2 callback from Google after user authorization. Exchanges authorization code for tokens and stores them.
       parameters:
         - name: code
@@ -352,7 +382,7 @@ paths:
     get:
       tags:
         - GitHub OAuth
-      summary: Handle GitHub OAuth callback
+      summary: Handle GitHub OAuth callback (called by GitHub after user authorization)
       description: Handle the OAuth2 callback from GitHub after user authorization. Exchanges authorization code for access token and stores it for future API calls.
       parameters:
         - name: code
