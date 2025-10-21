@@ -97,6 +97,7 @@ router.post("/verify", async (req, res) => {
 const scopes = [
     "repo",
     "user",
+    "user:email",
     "admin:org"
     // Add other scopes you need for your AREA services
 ];
