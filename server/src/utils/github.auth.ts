@@ -20,7 +20,7 @@ export async function verifyGithubToken(accessToken: string) {
         const response = await fetch("https://api.github.com/user", {
             method: "GET",
             headers: {
-                Authorization: `Bearer ${accessToken}`,
+                Authorization: `token ${accessToken}`,
                 Accept: "application/vnd.github.v3+json",
                 "User-Agent": "AREA-51-App"
             }
