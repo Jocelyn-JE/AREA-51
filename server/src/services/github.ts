@@ -63,21 +63,12 @@ class GitHubService extends BaseService {
                     {
                         name: "issue_number",
                         type: "number",
-                        description: "Issue/PR number (optional: monitor all)",
-                        required: false
-                    },
-                    {
-                        name: "contains",
-                        type: "string",
-                        description:
-                            "Only trigger if comment contains this text (optional)",
-                        required: false
+                        description: "Issue/PR number",
+                        required: true
                     }
                 ],
                 execute: async (params, context) => {
-                    // poll recent comments using GitHub API and return comment data if match
-                    // return { commentId, body, author, issueNumber, created_at } or null
-                    throw new Error("Implement GitHub API call here");
+                    return this.getNewComments(params, context);
                 }
             }
         ];
@@ -237,6 +228,61 @@ class GitHubService extends BaseService {
             };
         } catch (error) {
             console.error("Error checking pull requests:", error);
+            return null; // Don't trigger on API errors
+        }
+    }
+
+    private async getNewComments(
+        params: Record<string, unknown>,
+        context?: ServiceExecutionContext
+    ): Promise<unknown | null> {
+        console.log("Checking for new comments with filters:", params);
+        if (!context || !context.userTokens.github) {
+            if (!context) console.error("No context provided");
+            console.debug(context);
+            throw new Error("GitHub OAuth token required to check comments");
+        }
+        const owner = params.repo_owner as string;
+        const repo = params.repo_name as string;
+        const issueNumber = params.issue_number as number;
+
+        try {
+            const { Octokit } = await import("@octokit/rest");
+            const github = new Octokit({ auth: context.userTokens.github });
+
+            const lastChecked = params.lastTriggered
+                ? new Date(params.lastTriggered as string)
+                : new Date(Date.now() - 24 * 60 * 60 * 1000);
+            console.log(
+                `Checking for comments updated after ${lastChecked.toISOString()}`
+            );
+
+            const commentsRes = await github.request(
+                "GET /repos/{owner}/{repo}/issues/{issue_number}/comments",
+                {
+                    owner,
+                    repo,
+                    issue_number: issueNumber
+                }
+            );
+
+            const items = commentsRes.data;
+            if (!items || items.length === 0) {
+                console.log("No new comments found");
+                return null;
+            }
+
+            // Return the most recent comment
+            const latest = items[0];
+            return {
+                id: latest.id,
+                body: latest.body || "",
+                url: latest.html_url,
+                user: latest.user,
+                created_at: latest.created_at
+            };
+        } catch (error) {
+            console.error("Error checking comments:", error);
             return null; // Don't trigger on API errors
         }
     }
