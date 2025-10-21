@@ -285,7 +285,7 @@ class GitHubService extends BaseService {
             }
 
             // Return the most recent comment
-            const latest = items[0];
+            const latest = items[items.length - 1];
             return {
                 id: latest.id,
                 body: latest.body || "",
