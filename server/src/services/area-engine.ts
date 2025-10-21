@@ -17,6 +17,8 @@ export type AreaExecution = {
     enabled: boolean;
     createdAt: Date;
     lastTriggered?: Date;
+    lastError?: string;
+    lastErrorAt?: Date;
 };
 
 function getMissingParams(
@@ -111,6 +113,37 @@ export class AreaEngine {
             }
         } catch (error) {
             console.error(`Error executing area ${areaId}:`, error);
+
+            // Check if this is a Google authentication error
+            const isGoogleAuthError =
+                error instanceof Error &&
+                (error.message.includes("Google OAuth token required") ||
+                    error.message.includes(
+                        "Failed to refresh Google access token"
+                    ));
+
+            if (isGoogleAuthError) {
+                // Temporarily disable the area to prevent continuous failures
+                console.log(
+                    `Disabling area ${areaId} due to Google authentication issues`
+                );
+                await db.collection<AreaExecution>("areas").updateOne(
+                    { _id: areaId },
+                    {
+                        $set: {
+                            enabled: false,
+                            lastError:
+                                "Google authentication expired or revoked. Please re-authenticate with Google.",
+                            lastErrorAt: new Date()
+                        }
+                    }
+                );
+
+                throw new Error(
+                    "Google authentication has expired or been revoked. The area has been temporarily disabled. Please re-authenticate with Google and re-enable the area to continue using it."
+                );
+            }
+
             throw error;
         }
     }

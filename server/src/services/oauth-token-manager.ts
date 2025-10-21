@@ -60,6 +60,16 @@ export class OAuthTokenManager {
         );
     }
 
+    async removeTokensForUser(
+        userId: ObjectId,
+        serviceName: string
+    ): Promise<void> {
+        await db.collection<OAuthToken>("oauth_tokens").deleteOne({
+            userId,
+            serviceName
+        });
+    }
+
     async refreshTokenIfNeeded(
         userId: ObjectId,
         serviceName: string
@@ -71,8 +81,24 @@ export class OAuthTokenManager {
             tokenData.expiresAt &&
             tokenData.expiresAt < new Date(Date.now() + 5 * 60 * 1000)
         ) {
-            if (serviceName === "google" && tokenData.refreshToken)
-                return await this.refreshGoogleToken(tokenData);
+            if (serviceName === "google" && tokenData.refreshToken) {
+                try {
+                    return await this.refreshGoogleToken(tokenData);
+                } catch (error) {
+                    // If refresh fails due to invalid grant, remove the tokens
+                    if (
+                        error instanceof Error &&
+                        error.message.includes("invalid_grant")
+                    ) {
+                        console.log(
+                            `Removing expired Google tokens for user ${userId}`
+                        );
+                        await this.removeTokensForUser(userId, serviceName);
+                        return null;
+                    }
+                    throw error;
+                }
+            }
             // Add other service refresh logic here when implemented
         }
 
@@ -104,7 +130,38 @@ export class OAuthTokenManager {
             return credentials.access_token;
         } catch (error) {
             console.error("Error refreshing Google token:", error);
-            throw new Error("Failed to refresh Google access token");
+
+            // Check if this is an invalid_grant error (expired/revoked refresh token)
+            const errorMessage =
+                error instanceof Error ? error.message : String(error);
+            const errorCode =
+                typeof error === "object" && error !== null && "code" in error
+                    ? error.code
+                    : null;
+            const errorResponse =
+                typeof error === "object" &&
+                error !== null &&
+                "response" in error &&
+                typeof error.response === "object" &&
+                error.response !== null &&
+                "data" in error.response &&
+                typeof error.response.data === "object" &&
+                error.response.data !== null &&
+                "error" in error.response.data
+                    ? error.response.data.error
+                    : null;
+
+            if (
+                errorResponse === "invalid_grant" ||
+                errorMessage.includes("invalid_grant") ||
+                errorCode === 400
+            ) {
+                throw new Error("invalid_grant");
+            }
+
+            throw new Error(
+                `Failed to refresh Google access token: ${errorMessage}`
+            );
         }
     }
 }

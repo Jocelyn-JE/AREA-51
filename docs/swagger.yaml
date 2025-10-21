@@ -16,6 +16,8 @@ tags:
     description: Endpoints for user registration and login with traditional email/password
   - name: Google OAuth
     description: Endpoints for Google OAuth integration and service authorization
+  - name: GitHub OAuth
+    description: Endpoints for GitHub OAuth integration and service authorization
   - name: AREA Management
     description: Endpoints for creating, managing, and controlling AREA automations
   - name: Testing & Development
@@ -28,7 +30,7 @@ paths:
       summary: Get project metadata
       description: Returns metadata about the AREA project including client information, server data, and available services with their actions and reactions.
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
@@ -52,7 +54,7 @@ paths:
                         type: array
                         description: List of available services with their actions and reactions
                         items:
-                          $ref: '#/components/schemas/Service'
+                          $ref: "#/components/schemas/Service"
   /api/register:
     post:
       tags:
@@ -77,7 +79,7 @@ paths:
                   type: string
                   example: pass123
       responses:
-        '201':
+        "201":
           description: User registered successfully
           content:
             application/json:
@@ -87,13 +89,13 @@ paths:
                   message:
                     type: string
                   userID:
-                    $ref: '#/components/schemas/ObjectId'
-        '400':
-          $ref: '#/components/responses/Error400'
-        '409':
-          $ref: '#/components/responses/Error409'
-        '500':
-          $ref: '#/components/responses/Error500'
+                    $ref: "#/components/schemas/ObjectId"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "500":
+          $ref: "#/components/responses/Error500"
   /api/login:
     post:
       tags:
@@ -127,7 +129,7 @@ paths:
                       type: string
                       example: pass123
       responses:
-        '200':
+        "200":
           description: User logged in successfully
           content:
             application/json:
@@ -138,13 +140,13 @@ paths:
                     type: string
                     example: Login successful
                   token:
-                    $ref: '#/components/schemas/JWT'
-        '400':
-          $ref: '#/components/responses/Error400'
-        '401':
-          $ref: '#/components/responses/Error401'
-        '500':
-          $ref: '#/components/responses/Error500'
+                    $ref: "#/components/schemas/JWT"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "500":
+          $ref: "#/components/responses/Error500"
   /api/auth/google/verify:
     post:
       tags:
@@ -159,10 +161,10 @@ paths:
               type: object
               properties:
                 token:
-                  $ref: '#/components/schemas/JWT'
+                  $ref: "#/components/schemas/JWT"
                   description: Google OAuth token to verify
       responses:
-        '200':
+        "200":
           description: User authenticated successfully
           content:
             application/json:
@@ -173,12 +175,12 @@ paths:
                     type: string
                     example: Login successful
                   userID:
-                    $ref: '#/components/schemas/ObjectId'
+                    $ref: "#/components/schemas/ObjectId"
                     description: Unique identifier for the user
                   token:
-                    $ref: '#/components/schemas/JWT'
+                    $ref: "#/components/schemas/JWT"
                     description: JWT token for authenticated sessions
-        '201':
+        "201":
           description: New user created and authenticated successfully
           content:
             application/json:
@@ -189,19 +191,19 @@ paths:
                     type: string
                     example: User created and logged in successfully
                   userID:
-                    $ref: '#/components/schemas/ObjectId'
+                    $ref: "#/components/schemas/ObjectId"
                     description: Unique identifier for the newly created user
                   token:
-                    $ref: '#/components/schemas/JWT'
+                    $ref: "#/components/schemas/JWT"
                     description: JWT token for authenticated sessions
-        '400':
-          $ref: '#/components/responses/Error400'
-        '401':
-          $ref: '#/components/responses/Error401'
-        '403':
-          $ref: '#/components/responses/Error403'
-        '500':
-          $ref: '#/components/responses/Error500'
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "500":
+          $ref: "#/components/responses/Error500"
   /api/auth/google/authorize:
     get:
       tags:
@@ -211,7 +213,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Successful response with authorization URL
           content:
             application/json:
@@ -222,10 +224,10 @@ paths:
                     type: string
                     format: uri
                     example: https://accounts.google.com/o/oauth2/auth?client_id=...
-        '401':
-          $ref: '#/components/responses/Error401'
-        '500':
-          $ref: '#/components/responses/Error500'
+        "401":
+          $ref: "#/components/responses/Error401"
+        "500":
+          $ref: "#/components/responses/Error500"
   /api/auth/google/callback:
     get:
       tags:
@@ -246,14 +248,146 @@ paths:
             type: string
           description: User ID passed in state parameter
       responses:
-        '302':
+        "302":
           description: Redirect to frontend with success or error status
-        '400':
+        "400":
           description: Missing authorization code or user ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/github/verify:
+    post:
+      tags:
+        - GitHub OAuth
+      summary: Verify GitHub token and authenticate user
+      description: Verify a GitHub OAuth access token, create a new user if not existing, and return a JWT token for authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: GitHub OAuth access token to verify
+                  example: ghp_1234567890abcdef1234567890abcdef12345678
+      responses:
+        "200":
+          description: User authenticated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+                  userID:
+                    $ref: "#/components/schemas/ObjectId"
+                    description: Unique identifier for the user
+                  token:
+                    $ref: "#/components/schemas/JWT"
+                    description: JWT token for authenticated sessions
+        "201":
+          description: New user created and authenticated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User created and logged in successfully
+                  userID:
+                    $ref: "#/components/schemas/ObjectId"
+                    description: Unique identifier for the newly created user
+                  token:
+                    $ref: "#/components/schemas/JWT"
+                    description: JWT token for authenticated sessions
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /api/auth/github/authorize:
+    get:
+      tags:
+        - GitHub OAuth
+      summary: Get GitHub OAuth authorization URL
+      description: Retrieve the URL to redirect users for GitHub OAuth authentication and service authorization. Requires scopes for repository access, user information, and organization administration.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successful response with authorization URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authUrl:
+                    type: string
+                    format: uri
+                    example: https://github.com/login/oauth/authorize?client_id=...&scopes=repo,user,admin:org
+        "400":
+          description: GitHub services already authorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: GitHub services already authorized
+        "401":
+          $ref: "#/components/responses/Error401"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /api/auth/github/callback:
+    get:
+      tags:
+        - GitHub OAuth
+      summary: Handle GitHub OAuth callback
+      description: Handle the OAuth2 callback from GitHub after user authorization. Exchanges authorization code for access token and stores it for future API calls.
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Authorization code from GitHub
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+          description: User ID passed in state parameter
+      responses:
+        "302":
+          description: Redirect to frontend with success or error status
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              examples:
+                success:
+                  value: "{frontend_url}/dashboard?github_auth=success"
+                  description: Redirect on successful authorization
+                error:
+                  value: "{frontend_url}/dashboard?github_auth=error"
+                  description: Redirect on authorization failure
+        "400":
+          description: Missing authorization code or user ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/areas:
     post:
       tags:
@@ -285,7 +419,7 @@ paths:
                 actionParameters:
                   type: object
                   description: Parameters for configuring the action
-                  example: {"from_filter": "boss@company.com"}
+                  example: { "from_filter": "boss@company.com" }
                 reactionServiceName:
                   type: string
                   example: Gmail
@@ -297,7 +431,11 @@ paths:
                 reactionParameters:
                   type: object
                   description: Parameters for configuring the reaction
-                  example: {"to": "assistant@company.com", "subject": "Boss email received"}
+                  example:
+                    {
+                      "to": "assistant@company.com",
+                      "subject": "Boss email received",
+                    }
                 name:
                   type: string
                   description: Optional name for the area
@@ -305,7 +443,7 @@ paths:
                   type: string
                   description: Optional description for the area
       responses:
-        '201':
+        "201":
           description: Area created successfully
           content:
             application/json:
@@ -316,13 +454,13 @@ paths:
                     type: string
                     example: Area created successfully
                   area:
-                    $ref: '#/components/schemas/Area'
-        '400':
-          $ref: '#/components/responses/Error400'
-        '401':
-          $ref: '#/components/responses/Error401'
-        '500':
-          $ref: '#/components/responses/Error500'
+                    $ref: "#/components/schemas/Area"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "500":
+          $ref: "#/components/responses/Error500"
     get:
       tags:
         - AREA Management
@@ -331,7 +469,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: List of user's areas
           content:
             application/json:
@@ -341,11 +479,11 @@ paths:
                   areas:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Area'
-        '401':
-          $ref: '#/components/responses/Error401'
-        '500':
-          $ref: '#/components/responses/Error500'
+                      $ref: "#/components/schemas/Area"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "500":
+          $ref: "#/components/responses/Error500"
   /api/areas/{id}/toggle:
     put:
       tags:
@@ -359,7 +497,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/ObjectId'
+            $ref: "#/components/schemas/ObjectId"
           description: Area ID
       requestBody:
         required: true
@@ -375,7 +513,7 @@ paths:
                   description: Whether the area should be enabled
                   example: true
       responses:
-        '200':
+        "200":
           description: Area status updated successfully
           content:
             application/json:
@@ -385,14 +523,14 @@ paths:
                   message:
                     type: string
                     example: Area enabled successfully
-        '400':
-          $ref: '#/components/responses/Error400'
-        '401':
-          $ref: '#/components/responses/Error401'
-        '404':
-          $ref: '#/components/responses/Error404'
-        '500':
-          $ref: '#/components/responses/Error500'
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "500":
+          $ref: "#/components/responses/Error500"
   /api/areas/{id}/execute:
     post:
       tags:
@@ -406,10 +544,10 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/ObjectId'
+            $ref: "#/components/schemas/ObjectId"
           description: Area ID
       responses:
-        '200':
+        "200":
           description: Area executed successfully
           content:
             application/json:
@@ -419,14 +557,14 @@ paths:
                   message:
                     type: string
                     example: Area executed successfully
-        '400':
-          $ref: '#/components/responses/Error400'
-        '401':
-          $ref: '#/components/responses/Error401'
-        '404':
-          $ref: '#/components/responses/Error404'
-        '500':
-          $ref: '#/components/responses/Error500'
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "500":
+          $ref: "#/components/responses/Error500"
   /api/areas/{id}:
     delete:
       tags:
@@ -440,10 +578,10 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/ObjectId'
+            $ref: "#/components/schemas/ObjectId"
           description: Area ID
       responses:
-        '200':
+        "200":
           description: Area deleted successfully
           content:
             application/json:
@@ -453,14 +591,14 @@ paths:
                   message:
                     type: string
                     example: Area deleted successfully
-        '400':
-          $ref: '#/components/responses/Error400'
-        '401':
-          $ref: '#/components/responses/Error401'
-        '404':
-          $ref: '#/components/responses/Error404'
-        '500':
-          $ref: '#/components/responses/Error500'
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "500":
+          $ref: "#/components/responses/Error500"
   /api/areas/test/reaction:
     post:
       tags:
@@ -490,9 +628,14 @@ paths:
                 parameters:
                   type: object
                   description: Parameters for the reaction
-                  example: {"to": "test@example.com", "subject": "Test", "body": "Test message"}
+                  example:
+                    {
+                      "to": "test@example.com",
+                      "subject": "Test",
+                      "body": "Test message",
+                    }
       responses:
-        '200':
+        "200":
           description: Reaction executed successfully
           content:
             application/json:
@@ -502,26 +645,25 @@ paths:
                   message:
                     type: string
                     example: Reaction executed successfully
-        '400':
-          $ref: '#/components/responses/Error400'
-        '401':
-          $ref: '#/components/responses/Error401'
-        '500':
-          $ref: '#/components/responses/Error500'
-  
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "500":
+          $ref: "#/components/responses/Error500"
 
 components:
   schemas:
     ObjectId:
       type: string
       format: objectid
-      pattern: '^[0-9a-fA-F]{24}$'
+      pattern: "^[0-9a-fA-F]{24}$"
       description: |
         MongoDB ObjectID - A 12-byte identifier consisting of:
         - 4-byte timestamp (seconds since Unix epoch)
         - 5-byte random value (unique per machine/process)
         - 3-byte incrementing counter (per process, initialized randomly)
-        
+
         Represented as a 24-character hexadecimal string.
       example: "507f1f77bcf86cd799439011"
       minLength: 24
@@ -548,12 +690,12 @@ components:
           type: array
           description: List of available actions (triggers) for this service
           items:
-            $ref: '#/components/schemas/Action'
+            $ref: "#/components/schemas/Action"
         reactions:
           type: array
           description: List of available reactions for this service
           items:
-            $ref: '#/components/schemas/Reaction'
+            $ref: "#/components/schemas/Reaction"
     Action:
       type: object
       description: An action (trigger) that can be configured for a service
@@ -574,7 +716,7 @@ components:
           type: array
           description: Configuration parameters for this action
           items:
-            $ref: '#/components/schemas/Parameter'
+            $ref: "#/components/schemas/Parameter"
     Reaction:
       type: object
       description: A reaction that can be executed by a service
@@ -595,7 +737,7 @@ components:
           type: array
           description: Parameters required for this reaction
           items:
-            $ref: '#/components/schemas/Parameter'
+            $ref: "#/components/schemas/Parameter"
     Parameter:
       type: object
       description: A parameter definition for actions or reactions
@@ -648,7 +790,7 @@ components:
         - createdAt
       properties:
         _id:
-          $ref: '#/components/schemas/ObjectId'
+          $ref: "#/components/schemas/ObjectId"
           description: Unique identifier for the area
         actionServiceName:
           type: string
@@ -661,7 +803,7 @@ components:
         actionParameters:
           type: object
           description: Parameters for configuring the action
-          example: {"from_filter": "boss@company.com"}
+          example: { "from_filter": "boss@company.com" }
         reactionServiceName:
           type: string
           description: Name of the service that provides the reaction
@@ -673,9 +815,10 @@ components:
         reactionParameters:
           type: object
           description: Parameters for configuring the reaction
-          example: {"to": "assistant@company.com", "subject": "Boss email received"}
+          example:
+            { "to": "assistant@company.com", "subject": "Boss email received" }
         userId:
-          $ref: '#/components/schemas/ObjectId'
+          $ref: "#/components/schemas/ObjectId"
           description: ID of the user who owns this area
         enabled:
           type: boolean
@@ -710,37 +853,37 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Error401:
       description: Unauthorized
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Error403:
       description: Forbidden
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Error404:
       description: Not found
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Error409:
       description: Conflict
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Error500:
       description: Internal server error
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
   securitySchemes:
     bearerAuth:
       type: http
@@ -748,14 +891,14 @@ components:
       bearerFormat: JWT
       description: |
         JWT token for API authentication
-        
+
         **Auto-Authentication Instructions:**
         1. First, use the `/api/login` or `/api/auth/google/verify` endpoint
         2. Copy the `token` from the response
         3. Click the "Authorize" button above (here)
         4. In the `Value:` field enter: `<your-token>` (replace <your-token> with the actual token)
         5. All subsequent requests will be automatically authenticated
-        
+
         **Alternative:** Use the browser console to automatically set the token:
         ```javascript
         // After successful login, run this in browser console:
