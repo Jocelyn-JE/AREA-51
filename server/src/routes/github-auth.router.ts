@@ -94,6 +94,13 @@ router.post("/verify", async (req, res) => {
     }
 });
 
+const scopes = [
+    "repo",
+    "user",
+    "admin:org"
+    // Add other scopes you need for your AREA services
+];
+
 // GET /auth/github/authorize - Initiate OAuth2 flow for service permissions
 router.get("/authorize", verifyToken, async (req, res) => {
     if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
@@ -107,12 +114,6 @@ router.get("/authorize", verifyToken, async (req, res) => {
             .status(400)
             .json({ message: "GitHub services already authorized" });
     try {
-        const scopes = [
-            "repo",
-            "user",
-            "admin:org"
-            // Add other scopes you need for your AREA services
-        ];
         const authUrl = getGithubOAuthUrl(req.userId.toString(), scopes);
         res.status(200).json({ authUrl });
     } catch (error) {
@@ -148,7 +149,7 @@ router.get("/callback", async (req, res) => {
             accessToken: access_token,
             refreshToken: undefined,
             expiresAt: undefined,
-            scopes: ["repo", "user", "admin:org"],
+            scopes,
             createdAt: new Date(),
             updatedAt: new Date()
         };
