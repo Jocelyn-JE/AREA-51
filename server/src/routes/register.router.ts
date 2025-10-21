@@ -18,6 +18,7 @@ export type User = {
     username: string;
     role?: string;
     googleId?: string | null;
+    githubId?: string | null;
 };
 
 type RegisterRequest = {
