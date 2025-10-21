@@ -125,6 +125,8 @@ router.get("/authorize", verifyToken, async (req, res) => {
 // GET /auth/github/callback - Handle OAuth2 callback
 router.get("/callback", async (req, res) => {
     const { code, state: userId } = req.query;
+    const frontendUrl = process.env.FRONTEND_URL;
+    if (!frontendUrl) throw new Error("FRONTEND_URL not set in env");
 
     if (!code || !userId || typeof userId !== "string") {
         return res
@@ -162,13 +164,9 @@ router.get("/callback", async (req, res) => {
                 { upsert: true }
             );
         // Redirect back to frontend with success
-        const frontendUrl = process.env.FRONTEND_URL;
-        if (!frontendUrl) throw new Error("FRONTEND_URL not set in env");
         res.redirect(`${frontendUrl}/dashboard?github_auth=success`);
     } catch (error) {
         console.error("Error in GitHub OAuth callback:", error);
-        const frontendUrl = process.env.FRONTEND_URL;
-        if (!frontendUrl) throw new Error("FRONTEND_URL not set in env");
         res.redirect(`${frontendUrl}/dashboard?github_auth=error`);
     }
 });
