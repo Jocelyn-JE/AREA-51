@@ -154,9 +154,13 @@ class GitHubService extends BaseService {
                     }
                 ],
                 execute: async (params, context) => {
-                    // use context.userTokens.github to call:
-                    // POST /repos/:owner/:repo/issues/:issue_number/labels
-                    throw new Error("Implement GitHub API call here");
+                    await this.addLabelToIssue(
+                        params.repo_owner as string,
+                        params.repo_name as string,
+                        params.issue_number as number,
+                        params.label as string,
+                        context
+                    );
                 }
             }
         ];
@@ -324,6 +328,40 @@ class GitHubService extends BaseService {
             );
         } catch (error) {
             console.error("Error creating issue:", error);
+            throw error; // Propagate error to indicate failure
+        }
+    }
+
+    private async addLabelToIssue(
+        repo_owner: string,
+        repo_name: string,
+        issue_number: number,
+        label: string,
+        context?: ServiceExecutionContext
+    ): Promise<void> {
+        if (!context || !context.userTokens.github) {
+            if (!context) console.error("No context provided");
+            console.debug(context);
+            throw new Error("GitHub OAuth token required to add label");
+        }
+        try {
+            const { Octokit } = await import("@octokit/rest");
+            const github = new Octokit({ auth: context.userTokens.github });
+
+            await github.request(
+                "POST /repos/{owner}/{repo}/issues/{issue_number}/labels",
+                {
+                    owner: repo_owner,
+                    repo: repo_name,
+                    issue_number,
+                    labels: [label]
+                }
+            );
+            console.log(
+                `Added label "${label}" to issue #${issue_number} in ${repo_owner}/${repo_name}`
+            );
+        } catch (error) {
+            console.error("Error adding label to issue:", error);
             throw error; // Propagate error to indicate failure
         }
     }
