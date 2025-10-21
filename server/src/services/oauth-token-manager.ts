@@ -60,6 +60,16 @@ export class OAuthTokenManager {
         );
     }
 
+    async removeTokensForUser(
+        userId: ObjectId,
+        serviceName: string
+    ): Promise<void> {
+        await db.collection<OAuthToken>("oauth_tokens").deleteOne({
+            userId,
+            serviceName
+        });
+    }
+
     async refreshTokenIfNeeded(
         userId: ObjectId,
         serviceName: string
