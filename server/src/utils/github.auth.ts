@@ -82,7 +82,7 @@ export async function exchangeCodeForToken(code: string): Promise<string> {
                 body: JSON.stringify({
                     client_id: GITHUB_CLIENT_ID,
                     client_secret: GITHUB_CLIENT_SECRET,
-                    code: code,
+                    code,
                     redirect_uri: GITHUB_REDIRECT_URI
                 })
             }
