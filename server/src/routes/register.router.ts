@@ -17,7 +17,7 @@ export type User = {
     password: string | null;
     username: string;
     role?: string;
-    googleId: string | null;
+    googleId?: string | null;
 };
 
 type RegisterRequest = {
@@ -55,8 +55,7 @@ router.post("/", async (req, res) => {
             email,
             password: await hashPassword(password),
             username,
-            role: "user",
-            googleId: null
+            role: "user"
         });
         res.status(201).json({
             message: "User registered successfully",
