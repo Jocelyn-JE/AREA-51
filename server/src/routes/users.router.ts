@@ -8,9 +8,7 @@ const router = express.Router();
 
 // GET /users/info
 router.get("/info", verifyToken, async (req, res) => {
-    if (!req.userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
+    if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
     try {
         const userObjectId = typeof req.userId === "string" 
             ? new ObjectId(req.userId) 
