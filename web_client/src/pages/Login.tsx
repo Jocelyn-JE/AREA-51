@@ -1,11 +1,8 @@
 import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function Login() {
-    const navigate = useNavigate();
-
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
@@ -25,7 +22,7 @@ function Login() {
           }
 
           localStorage.setItem("token", loginData.token);
-          navigate("/explore");
+          window.location.href = "/explore";
         } catch (err: any) {
           console.error("Login error:", err);
           setError(err.message || "Login failed. Please try again.");
@@ -85,7 +82,7 @@ function Login() {
                         })
                         .then(response => {
                             localStorage.setItem("token", response.data.token);
-                            navigate("/explore");
+                            window.location.href = "/explore";
                         }).catch(error => {
                             console.error("Google login error:", error);
                             setError("Google login failed");
