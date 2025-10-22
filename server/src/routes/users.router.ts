@@ -17,6 +17,9 @@ router.get("/info", verifyToken, async (req, res) => {
             { _id: userObjectId },
             { projection: { password: 0, googleId: 0, githubId: 0 } }
         );
+        if (!user) {
+            return res.status(404).send({ message: "User not found" });
+        }
         res.send(user);
     } catch (error) {
         console.error("Error fetching user info:", error);
