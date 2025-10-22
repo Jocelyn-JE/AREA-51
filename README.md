@@ -77,9 +77,9 @@ AREA-51/
    ```
 
 4. **Access the applications:**
-   - **Web Client:** <http://localhost:${FRONTEND_PORT}> (default: 8080)
-   - **API Server:** <http://localhost:${BACKEND_PORT}> (default: 3000)
-   - **MongoDB Express:** <http://localhost:8081> (database management)
+   - **Web Client:** <http://localhost:8081>
+   - **API Server:** <http://localhost:8080>
+   - **MongoDB Express:** <http://localhost:8082> (database management)
 
 5. **Stop services:**
 

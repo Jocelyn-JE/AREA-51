@@ -7,10 +7,11 @@ import {
 } from "../utils/request.validation";
 import { generateToken, verifyToken } from "../utils/jwt";
 import {
-    verifyGoogleToken,
-    oauth2Client,
-    OAuthToken
-} from "../utils/google.auth";
+    verifyGithubToken,
+    getGithubOAuthUrl,
+    exchangeCodeForToken
+} from "../utils/github.auth";
+import { OAuthToken } from "../utils/google.auth";
 import { ObjectId } from "mongodb";
 import { OAuthTokenManager } from "../services/oauth-token-manager";
 
@@ -19,7 +20,7 @@ const router = express.Router();
 async function findOrCreateUser(
     email: string,
     name: string,
-    googleId: string,
+    githubId: string,
     res: express.Response
 ) {
     let user = (await db
@@ -28,7 +29,7 @@ async function findOrCreateUser(
     let message = "Login successful";
     let statusCode = 200;
     if (user) {
-        if (user.googleId !== googleId)
+        if (user.githubId !== githubId)
             return res.status(403).json({
                 error: "This email is already associated with another account"
             });
@@ -38,7 +39,7 @@ async function findOrCreateUser(
         }
     } else {
         // User does not exist, create a new user
-        user = await createGoogleUser(email, name, googleId);
+        user = await createGithubUser(email, name, githubId);
         if (!user._id) {
             console.error("Created user missing _id:", user);
             return res.status(500).json({ error: "Internal server error" });
@@ -51,14 +52,14 @@ async function findOrCreateUser(
         .json({ message, userID: user._id, token: generateToken(user._id) });
 }
 
-async function createGoogleUser(email: string, name: string, googleId: string) {
+async function createGithubUser(email: string, name: string, githubId: string) {
     try {
         const newUser: User = {
             email,
             password: null,
             username: name,
             role: "user",
-            googleId
+            githubId
         };
         const createdUser = await db
             .collection<User>("users")
@@ -70,7 +71,7 @@ async function createGoogleUser(email: string, name: string, googleId: string) {
     }
 }
 
-// POST /auth/google/verify - Verify Google ID token and login/register user
+// POST /auth/github/verify - Verify GitHub access token and login/register user
 router.post("/verify", async (req, res) => {
     if (
         validateJSONRequest(req, res) ||
@@ -78,58 +79,55 @@ router.post("/verify", async (req, res) => {
     )
         return;
     const { token } = req.body;
-    const payload = await verifyGoogleToken(token);
+    const payload = await verifyGithubToken(token);
     if (!payload) return res.status(401).json({ error: "Invalid token" });
     const email = payload.email; // user's email
     const name = payload.name; // user's full name
-    const googleId = payload.sub; // Google unique user ID
-    if (!email || !name || !googleId)
+    const githubId = payload.id; // GitHub unique user ID
+    if (!email || !name || !githubId)
         return res.status(400).json({ error: "Incomplete token payload" });
     try {
-        return await findOrCreateUser(email, name, googleId, res);
+        return await findOrCreateUser(email, name, githubId, res);
     } catch (error) {
-        console.error("Error in Google login:", error);
+        console.error("Error in GitHub login:", error);
         return res.status(500).json({ error: "Server error" });
     }
 });
 
-// GET /auth/google/authorize - Initiate OAuth2 flow for service permissions
+const scopes = [
+    "repo",
+    "user",
+    "user:email",
+    "admin:org"
+    // Add other scopes you need for your AREA services
+];
+
+// GET /auth/github/authorize - Initiate OAuth2 flow for service permissions
 router.get("/authorize", verifyToken, async (req, res) => {
     if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
     if (
         (await OAuthTokenManager.getInstance().getTokensForUser(
             new ObjectId(req.userId),
-            "google"
+            "github"
         )) !== null
     )
         return res
             .status(400)
-            .json({ message: "Google services already authorized" });
+            .json({ message: "GitHub services already authorized" });
     try {
-        const scopes = [
-            "https://www.googleapis.com/auth/gmail.readonly",
-            "https://www.googleapis.com/auth/gmail.send",
-            "https://www.googleapis.com/auth/drive.file",
-            "https://www.googleapis.com/auth/drive.readonly",
-            "https://www.googleapis.com/auth/calendar.readonly"
-            // Add other scopes you need for your AREA services
-        ];
-        const authUrl = oauth2Client.generateAuthUrl({
-            access_type: "offline", // Important: gets refresh token
-            scope: scopes,
-            state: req.userId.toString(), // Pass userId to identify user in callback
-            prompt: "consent" // Forces consent screen to get refresh token
-        });
+        const authUrl = getGithubOAuthUrl(req.userId.toString(), scopes);
         res.status(200).json({ authUrl });
     } catch (error) {
-        console.error("Error generating Google OAuth URL:", error);
+        console.error("Error generating GitHub OAuth URL:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 });
 
-// GET /auth/google/callback - Handle OAuth2 callback
+// GET /auth/github/callback - Handle OAuth2 callback
 router.get("/callback", async (req, res) => {
     const { code, state: userId } = req.query;
+    const frontendUrl = process.env.FRONTEND_URL;
+    if (!frontendUrl) throw new Error("FRONTEND_URL not set in env");
 
     if (!code || !userId || typeof userId !== "string") {
         return res
@@ -139,9 +137,9 @@ router.get("/callback", async (req, res) => {
 
     try {
         // Exchange authorization code for tokens
-        const { tokens } = await oauth2Client.getToken(code as string);
+        const access_token = await exchangeCodeForToken(code.toString());
 
-        if (!tokens.access_token) {
+        if (!access_token) {
             return res
                 .status(400)
                 .json({ error: "Failed to get access token" });
@@ -150,15 +148,11 @@ router.get("/callback", async (req, res) => {
         // Store tokens in your oauth_tokens collection
         const tokenData: OAuthToken = {
             userId: new ObjectId(userId),
-            serviceName: "google",
-            accessToken: tokens.access_token,
-            refreshToken: tokens.refresh_token || undefined,
-            expiresAt: tokens.expiry_date
-                ? new Date(tokens.expiry_date)
-                : undefined,
-            scopes: Array.isArray(tokens.scope)
-                ? tokens.scope
-                : tokens.scope?.split(" ") || [],
+            serviceName: "github",
+            accessToken: access_token,
+            refreshToken: undefined,
+            expiresAt: undefined,
+            scopes,
             createdAt: new Date(),
             updatedAt: new Date()
         };
@@ -166,19 +160,15 @@ router.get("/callback", async (req, res) => {
         await db
             .collection<OAuthToken>("oauth_tokens")
             .updateOne(
-                { userId: tokenData.userId, serviceName: "google" },
+                { userId: tokenData.userId, serviceName: "github" },
                 { $set: tokenData },
                 { upsert: true }
             );
         // Redirect back to frontend with success
-        const frontendUrl = process.env.FRONTEND_URL;
-        if (!frontendUrl) throw new Error("FRONTEND_URL not set in env");
-        res.redirect(`${frontendUrl}/dashboard?google_auth=success`);
+        res.redirect(`${frontendUrl}/dashboard?github_auth=success`);
     } catch (error) {
-        console.error("Error in Google OAuth callback:", error);
-        const frontendUrl = process.env.FRONTEND_URL;
-        if (!frontendUrl) throw new Error("FRONTEND_URL not set in env");
-        res.redirect(`${frontendUrl}/dashboard?google_auth=error`);
+        console.error("Error in GitHub OAuth callback:", error);
+        res.redirect(`${frontendUrl}/dashboard?github_auth=error`);
     }
 });
 

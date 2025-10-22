@@ -17,6 +17,8 @@ export type AreaExecution = {
     enabled: boolean;
     createdAt: Date;
     lastTriggered?: Date;
+    lastError?: string;
+    lastErrorAt?: Date;
 };
 
 function getMissingParams(
@@ -111,6 +113,37 @@ export class AreaEngine {
             }
         } catch (error) {
             console.error(`Error executing area ${areaId}:`, error);
+
+            // Check if this is a Google authentication error
+            const isGoogleAuthError =
+                error instanceof Error &&
+                (error.message.includes("Google OAuth token required") ||
+                    error.message.includes(
+                        "Failed to refresh Google access token"
+                    ));
+
+            if (isGoogleAuthError) {
+                // Temporarily disable the area to prevent continuous failures
+                console.log(
+                    `Disabling area ${areaId} due to Google authentication issues`
+                );
+                await db.collection<AreaExecution>("areas").updateOne(
+                    { _id: areaId },
+                    {
+                        $set: {
+                            enabled: false,
+                            lastError:
+                                "Google authentication expired or revoked. Please re-authenticate with Google.",
+                            lastErrorAt: new Date()
+                        }
+                    }
+                );
+
+                throw new Error(
+                    "Google authentication has expired or been revoked. The area has been temporarily disabled. Please re-authenticate with Google and re-enable the area to continue using it."
+                );
+            }
+
             throw error;
         }
     }
@@ -126,35 +159,6 @@ export class AreaEngine {
         const service = serviceRegistry.get(serviceName);
         if (!service) throw new Error(`Service ${serviceName} not found`);
         await service.executeReaction(reactionName, parameters);
-    }
-
-    /**
-     * Monitor all enabled areas (this would be called periodically)
-     */
-    async monitorAreas(): Promise<void> {
-        const enabledAreas = await db
-            .collection<AreaExecution>("areas")
-            .find({ enabled: true })
-            .toArray();
-
-        console.log(`Monitoring ${enabledAreas.length} enabled areas`);
-        // Process in batches of 10 to avoid overwhelming the system
-        for (let i = 0; i < enabledAreas.length; i += 10) {
-            const batch = enabledAreas.slice(i, i + 10);
-            const promises = batch.map(async (area) => {
-                if (!area._id) {
-                    console.error("Area missing _id, skipping execution");
-                    return Promise.resolve();
-                }
-                try {
-                    return await this.executeArea(area._id);
-                } catch (error) {
-                    console.error(`Failed to execute area ${area._id}:`, error);
-                    return Promise.resolve();
-                }
-            });
-            await Promise.all(promises);
-        }
     }
 
     /**

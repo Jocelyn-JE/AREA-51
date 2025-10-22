@@ -11,6 +11,8 @@ import registerRouter from "./routes/register.router";
 import loginRouter from "./routes/login.router";
 import googleAuthRouter from "./routes/google-auth.router";
 import areaRouter from "./routes/area.router";
+import githubAuthRouter from "./routes/github-auth.router";
+import usersRouter from "./routes/users.router";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -32,8 +34,12 @@ app.get("/about.json", aboutRouter);
 app.use("/api/register", registerRouter);
 // Login route
 app.use("/api/login", loginRouter);
+// Users route
+app.use("/api/users", usersRouter);
 // Google Auth route
 app.use("/api/auth/google", googleAuthRouter);
+// Github Auth route
+app.use("/api/auth/github", githubAuthRouter);
 // Area route
 app.use("/api/areas", areaRouter);
 

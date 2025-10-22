@@ -13,7 +13,7 @@ function Login() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-          const loginRes = await fetch("http://localhost:3000/api/login", {
+          const loginRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password }),
@@ -80,7 +80,7 @@ function Login() {
                 </div>
                 <GoogleLogin
                     onSuccess={(credentialResponse) => {
-                        axios.post("http://localhost:3000/api/auth/google/verify", {
+                        axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/google/verify`, {
                             token: credentialResponse.credential
                         })
                         .then(response => {
