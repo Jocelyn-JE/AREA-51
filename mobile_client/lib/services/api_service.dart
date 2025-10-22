@@ -74,6 +74,10 @@ class ApiService {
       // If successful, store the JWT token
       if (result['success'] && result['data']['token'] != null) {
         _jwtToken = result['data']['token'];
+        print('✅ Google Auth: JWT Token stored successfully');
+        print('🔐 Token preview: ${_jwtToken!.substring(0, _jwtToken!.length > 20 ? 20 : _jwtToken!.length)}...');
+      } else {
+        print('❌ Google Auth: No token received in response');
       }
 
       return result;
@@ -147,6 +151,10 @@ class ApiService {
       // If successful, store the JWT token
       if (result['success'] && result['data']['token'] != null) {
         _jwtToken = result['data']['token'];
+        print('✅ Login: JWT Token stored successfully');
+        print('🔐 Token preview: ${_jwtToken!.substring(0, _jwtToken!.length > 20 ? 20 : _jwtToken!.length)}...');
+      } else {
+        print('❌ Login: No token received in response');
       }
 
       return result;
@@ -315,6 +323,39 @@ class ApiService {
 
       return _handleResponse(response);
     } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+        'statusCode': 0,
+      };
+    }
+  }
+
+  // Get authenticated user information
+  Future<Map<String, dynamic>> getUserInfo() async {
+    try {
+      print('🔐 getUserInfo: JWT Token available: ${_jwtToken != null}');
+      if (_jwtToken != null) {
+        print('🔐 Token preview: ${_jwtToken!.substring(0, _jwtToken!.length > 20 ? 20 : _jwtToken!.length)}...');
+      }
+      
+      final url = BackendConfigService.getApiUrl('/api/users/info');
+      final headers = _getHeaders(requiresAuth: true);
+      
+      print('🔐 Request URL: $url');
+      print('🔐 Request Headers: ${headers.keys.join(", ")}');
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: headers,
+      );
+
+      print('🔐 Response Status: ${response.statusCode}');
+      print('🔐 Response Body: ${response.body}');
+
+      return _handleResponse(response);
+    } catch (e) {
+      print('❌ getUserInfo Error: ${e.toString()}');
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
