@@ -10,12 +10,9 @@ const router = express.Router();
 router.get("/info", verifyToken, async (req, res) => {
     if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
     try {
-        const userObjectId = typeof req.userId === "string" 
-            ? new ObjectId(req.userId) 
-            : req.userId;
 
         const user = await db.collection<User>("users").findOne(
-            { _id: userObjectId },
+            { _id: req.userId },
             { projection: { password: 0, googleId: 0, githubId: 0 } }
         );
         if (!user)
