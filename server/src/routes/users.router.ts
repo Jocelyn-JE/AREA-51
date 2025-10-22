@@ -23,7 +23,7 @@ router.get("/info", verifyToken, async (req, res) => {
         res.send(user);
     } catch (error) {
         console.error("Error fetching user info:", error);
-        res.status(500).send({ error: "Internal server error" });
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 
