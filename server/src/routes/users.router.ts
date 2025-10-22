@@ -21,7 +21,7 @@ router.get("/info", verifyToken, async (req, res) => {
             { projection: { password: 0, googleId: 0, githubId: 0 } }
         );
         if (!user) {
-            return res.status(404).send({ message: "User not found" });
+            return res.status(404).send({ error: "User not found" });
         }
         res.send(user);
     } catch (error) {
