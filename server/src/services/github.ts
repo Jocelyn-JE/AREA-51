@@ -5,7 +5,7 @@ import {
     ServiceExecutionContext
 } from "./types";
 
-class GitHubService extends BaseService {
+export class GitHubService extends BaseService {
     constructor() {
         const actions: Action[] = [
             {
