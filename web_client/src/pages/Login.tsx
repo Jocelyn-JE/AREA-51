@@ -18,7 +18,6 @@ function Login() {
         e.preventDefault();
         try {
           await login(username, password);
-          window.location.href = "/areas";
         } catch (err: any) {
           console.error("Login error:", err);
           setError(err.message || "Login failed. Please try again.");
