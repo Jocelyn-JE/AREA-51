@@ -40,7 +40,6 @@ function Signup() {
       }
 
       await login(username, password);
-      window.location.href = "/areas";
     } catch (err: any) {
       setError(err.message);
     } finally {

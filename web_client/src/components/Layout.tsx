@@ -21,12 +21,12 @@ export default function Layout({children}: {children?: React.ReactNode}) {
                 {user ? (
                     <div className="flex items-center">
                         <span className="text-gray-600 mr-4">Welcome {user.username}!</span>
-                        <button
-                            onClick={() => window.location.href = "/areas"}
+                        <a
+                            href="/areas"
                             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mr-4"
                         >
                             Areas
-                        </button>
+                        </a>
                         <button
                             onClick={handleLogout}
                             className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
