@@ -6,6 +6,7 @@ import App from "./App";
 import Explore from "./pages/Explore";
 import Layout from "./components/Layout";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { AuthProvider } from "./context/AuthContext";
 import "./index.css";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
@@ -21,19 +22,19 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <GoogleOAuthProvider clientId={CLIENT_ID}>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            {/* Redirect `/` to `/explore` */}
-            <Route path="/" element={<Navigate to="/explore" replace />} />
-            <Route path="/explore" element={<Explore />} />
-            <Route path="/service/:serviceName" element={<ServiceDetail />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/areas" element={<ProtectedRoute><Areas /></ProtectedRoute>} />
-            {/* fallback route */}
-            <Route path="*" element={<App />} />
-          </Route>
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Navigate to="/explore" replace />} />
+              <Route path="explore" element={<Explore />} />
+              <Route path="service/:serviceName" element={<ServiceDetail />} />
+              <Route path="login" element={<Login />} />
+              <Route path="signup" element={<Signup />} />
+              <Route path="areas" element={<ProtectedRoute><Areas /></ProtectedRoute>} />
+              <Route path="*" element={<App />} />
+            </Route>
+          </Routes>
+        </AuthProvider>
       </GoogleOAuthProvider>
     </BrowserRouter>
   </React.StrictMode>

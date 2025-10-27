@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 interface Action {
   name: string;
@@ -66,12 +66,12 @@ function ServiceDetail() {
 
 return ( 
     <div className="px-10 py-12 max-w-5xl mx-auto">
-      <Link
-        to="/explore"
+      <a
+        href="/explore"
         className="text-blue-600 hover:underline inline-block mb-6"
       >
         ← Back to Explore
-      </Link>
+      </a>
 
 
       {/* Service Details */}
