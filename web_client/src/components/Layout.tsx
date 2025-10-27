@@ -1,14 +1,12 @@
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 
-export default function Layout({children}: {children?: React.ReactNode}) {
+export default function Layout() {
     const { user, logout } = useAuth();
-    const navigate = useNavigate();
 
     const handleLogout = () => {
     logout();
-    navigate("/");
+    window.location.href = "/";
     };
 
     return (
@@ -48,7 +46,7 @@ export default function Layout({children}: {children?: React.ReactNode}) {
 
             {/* Main content */}
             <main className="flex-1">
-                {children ? children : <Outlet />}
+                <Outlet />
             </main>
 
             {/* Footer */}

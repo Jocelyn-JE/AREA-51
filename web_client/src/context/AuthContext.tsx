@@ -50,7 +50,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
       } catch (error) {
-        console.log('Disconnected');
+        console.error('Disconnected');
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);
@@ -76,7 +76,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const data = await loginRes.json();
       const { token } = data;
-      console.log('User token response:', token);
 
       const userInfoRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/info`, {
         headers: {
@@ -94,6 +93,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userInfoData));
       setUser(userInfoData);
+      window.location.href = "/areas";
     } catch (error) {
       console.error('Login failed:', error);
       throw error; // Re-throw so calling component can handle it
