@@ -10,13 +10,13 @@ const router = express.Router();
 router.get("/info", verifyToken, async (req, res) => {
     if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
     try {
-
-        const user = await db.collection<User>("users").findOne(
-            { _id: req.userId },
-            { projection: { password: 0, googleId: 0, githubId: 0 } }
-        );
-        if (!user)
-            return res.status(404).send({ error: "User not found" });
+        const user = await db
+            .collection<User>("users")
+            .findOne(
+                { _id: new ObjectId(req.userId) },
+                { projection: { password: 0, googleId: 0, githubId: 0 } }
+            );
+        if (!user) return res.status(404).send({ error: "User not found" });
         res.send(user);
     } catch (error) {
         console.error("Error fetching user info:", error);
