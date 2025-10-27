@@ -14,7 +14,7 @@ class GoogleAuthService {
   // Getter for ID token
   static String? get idToken => _idToken;
 
-  // Getter for JWT token
+  // Getter for JW@Jocelyn-JE this is your line any clue T token
   static String? get jwtToken => _jwtToken;
 
   // Initialize Google Sign-In

@@ -57,30 +57,21 @@ class ApiService {
     }
   }
 
-  // Verify Google ID token with backend
-  Future<Map<String, dynamic>> verifyGoogleToken(String idToken) async {
+  // ============================================================================
+  // SYSTEM INFORMATION ENDPOINTS
+  // ============================================================================
+
+  /// GET /about.json
+  /// Get project metadata including client info, server data, and available services
+  Future<Map<String, dynamic>> getAbout() async {
     try {
-      final url = BackendConfigService.getApiUrl('/api/auth/google/verify');
-      final response = await http.post(
+      final url = BackendConfigService.getApiUrl('/about.json');
+      final response = await http.get(
         Uri.parse(url),
         headers: _getHeaders(),
-        body: json.encode({
-          'token': idToken,
-        }),
       );
 
-      final result = _handleResponse(response);
-      
-      // If successful, store the JWT token
-      if (result['success'] && result['data']['token'] != null) {
-        _jwtToken = result['data']['token'];
-        print('✅ Google Auth: JWT Token stored successfully');
-        print('🔐 Token preview: ${_jwtToken!.substring(0, _jwtToken!.length > 20 ? 20 : _jwtToken!.length)}...');
-      } else {
-        print('❌ Google Auth: No token received in response');
-      }
-
-      return result;
+      return _handleResponse(response);
     } catch (e) {
       return {
         'success': false,
@@ -90,7 +81,12 @@ class ApiService {
     }
   }
 
-  // Register a new user
+  // ============================================================================
+  // USER RELATED ENDPOINTS
+  // ============================================================================
+
+  /// POST /api/register
+  /// Register a new user with email, username, and password
   Future<Map<String, dynamic>> register({
     required String email,
     required String username,
@@ -118,7 +114,8 @@ class ApiService {
     }
   }
 
-  // Login with email/username and password
+  /// POST /api/login
+  /// Login with email/username and password. Returns JWT token valid for 1 hour
   Future<Map<String, dynamic>> login({
     String? email,
     String? username,
@@ -151,10 +148,6 @@ class ApiService {
       // If successful, store the JWT token
       if (result['success'] && result['data']['token'] != null) {
         _jwtToken = result['data']['token'];
-        print('✅ Login: JWT Token stored successfully');
-        print('🔐 Token preview: ${_jwtToken!.substring(0, _jwtToken!.length > 20 ? 20 : _jwtToken!.length)}...');
-      } else {
-        print('❌ Login: No token received in response');
       }
 
       return result;
@@ -167,29 +160,11 @@ class ApiService {
     }
   }
 
-  // Get about.json with service information
-  Future<Map<String, dynamic>> getAbout() async {
+  /// GET /api/users/info
+  /// Get authenticated user information
+  Future<Map<String, dynamic>> getUserInfo() async {
     try {
-      final url = BackendConfigService.getApiUrl('/about.json');
-      final response = await http.get(
-        Uri.parse(url),
-        headers: _getHeaders(),
-      );
-
-      return _handleResponse(response);
-    } catch (e) {
-      return {
-        'success': false,
-        'error': 'Network error: ${e.toString()}',
-        'statusCode': 0,
-      };
-    }
-  }
-
-  // Get user's areas
-  Future<Map<String, dynamic>> getAreas() async {
-    try {
-      final url = BackendConfigService.getApiUrl('/api/areas');
+      final url = BackendConfigService.getApiUrl('/api/users/info');
       final response = await http.get(
         Uri.parse(url),
         headers: _getHeaders(requiresAuth: true),
@@ -205,7 +180,120 @@ class ApiService {
     }
   }
 
-  // Create a new area
+  // ============================================================================
+  // GOOGLE OAUTH ENDPOINTS
+  // ============================================================================
+
+  /// POST /api/auth/google/verify
+  /// Verify Google token and authenticate user
+  Future<Map<String, dynamic>> verifyGoogleToken(String idToken) async {
+    try {
+      final url = BackendConfigService.getApiUrl('/api/auth/google/verify');
+      final response = await http.post(
+        Uri.parse(url),
+        headers: _getHeaders(),
+        body: json.encode({
+          'token': idToken,
+        }),
+      );
+
+      final result = _handleResponse(response);
+      
+      // If successful, store the JWT token
+      if (result['success'] && result['data']['token'] != null) {
+        _jwtToken = result['data']['token'];
+      }
+
+      return result;
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+        'statusCode': 0,
+      };
+    }
+  }
+
+  /// GET /api/auth/google/authorize
+  /// Get Google OAuth authorization URL
+  Future<Map<String, dynamic>> getGoogleAuthUrl() async {
+    try {
+      final url = BackendConfigService.getApiUrl('/api/auth/google/authorize');
+      final response = await http.get(
+        Uri.parse(url),
+        headers: _getHeaders(requiresAuth: true),
+      );
+
+      return _handleResponse(response);
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+        'statusCode': 0,
+      };
+    }
+  }
+
+  // ============================================================================
+  // GITHUB OAUTH ENDPOINTS
+  // ============================================================================
+
+  /// POST /api/auth/github/verify
+  /// Verify GitHub token and authenticate user
+  Future<Map<String, dynamic>> verifyGithubToken(String accessToken) async {
+    try {
+      final url = BackendConfigService.getApiUrl('/api/auth/github/verify');
+      final response = await http.post(
+        Uri.parse(url),
+        headers: _getHeaders(),
+        body: json.encode({
+          'token': accessToken,
+        }),
+      );
+
+      final result = _handleResponse(response);
+      
+      // If successful, store the JWT token
+      if (result['success'] && result['data']['token'] != null) {
+        _jwtToken = result['data']['token'];
+      }
+
+      return result;
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+        'statusCode': 0,
+      };
+    }
+  }
+
+  /// GET /api/auth/github/authorize
+  /// Get GitHub OAuth authorization URL
+  Future<Map<String, dynamic>> getGithubAuthUrl() async {
+    try {
+      final url = BackendConfigService.getApiUrl('/api/auth/github/authorize');
+      final response = await http.get(
+        Uri.parse(url),
+        headers: _getHeaders(requiresAuth: true),
+      );
+
+      return _handleResponse(response);
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+        'statusCode': 0,
+      };
+    }
+  }
+
+  // ============================================================================
+  // AREA MANAGEMENT ENDPOINTS
+  // ============================================================================
+
+  /// POST /api/areas
+  /// Create a new AREA automation
   Future<Map<String, dynamic>> createArea({
     required String actionServiceName,
     required String actionName,
@@ -243,7 +331,28 @@ class ApiService {
     }
   }
 
-  // Toggle area enabled/disabled
+  /// GET /api/areas
+  /// Get all areas created by the authenticated user
+  Future<Map<String, dynamic>> getAreas() async {
+    try {
+      final url = BackendConfigService.getApiUrl('/api/areas');
+      final response = await http.get(
+        Uri.parse(url),
+        headers: _getHeaders(requiresAuth: true),
+      );
+
+      return _handleResponse(response);
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+        'statusCode': 0,
+      };
+    }
+  }
+
+  /// PUT /api/areas/{id}/toggle
+  /// Enable or disable an area
   Future<Map<String, dynamic>> toggleArea(String areaId, bool enabled) async {
     try {
       final url = BackendConfigService.getApiUrl('/api/areas/$areaId/toggle');
@@ -265,7 +374,8 @@ class ApiService {
     }
   }
 
-  // Execute area manually
+  /// POST /api/areas/{id}/execute
+  /// Manually execute an area
   Future<Map<String, dynamic>> executeArea(String areaId) async {
     try {
       final url = BackendConfigService.getApiUrl('/api/areas/$areaId/execute');
@@ -284,7 +394,8 @@ class ApiService {
     }
   }
 
-  // Delete area
+  /// DELETE /api/areas/{id}
+  /// Delete a specific area
   Future<Map<String, dynamic>> deleteArea(String areaId) async {
     try {
       final url = BackendConfigService.getApiUrl('/api/areas/$areaId');
@@ -303,7 +414,12 @@ class ApiService {
     }
   }
 
-  // Test a reaction
+  // ============================================================================
+  // TESTING & DEVELOPMENT ENDPOINTS
+  // ============================================================================
+
+  /// POST /api/areas/test/reaction
+  /// Test a reaction with given parameters
   Future<Map<String, dynamic>> testReaction({
     required String serviceName,
     required String reactionName,
@@ -323,39 +439,6 @@ class ApiService {
 
       return _handleResponse(response);
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Network error: ${e.toString()}',
-        'statusCode': 0,
-      };
-    }
-  }
-
-  // Get authenticated user information
-  Future<Map<String, dynamic>> getUserInfo() async {
-    try {
-      print('🔐 getUserInfo: JWT Token available: ${_jwtToken != null}');
-      if (_jwtToken != null) {
-        print('🔐 Token preview: ${_jwtToken!.substring(0, _jwtToken!.length > 20 ? 20 : _jwtToken!.length)}...');
-      }
-      
-      final url = BackendConfigService.getApiUrl('/api/users/info');
-      final headers = _getHeaders(requiresAuth: true);
-      
-      print('🔐 Request URL: $url');
-      print('🔐 Request Headers: ${headers.keys.join(", ")}');
-      
-      final response = await http.get(
-        Uri.parse(url),
-        headers: headers,
-      );
-
-      print('🔐 Response Status: ${response.statusCode}');
-      print('🔐 Response Body: ${response.body}');
-
-      return _handleResponse(response);
-    } catch (e) {
-      print('❌ getUserInfo Error: ${e.toString()}');
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
