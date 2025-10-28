@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BackendConfigService {
@@ -32,7 +33,7 @@ class BackendConfigService {
       
       return success;
     } catch (e) {
-      print('Error saving backend URL: $e');
+      debugPrint('[BackendConfig] 💥 Error saving backend URL: $e');
       return false;
     }
   }

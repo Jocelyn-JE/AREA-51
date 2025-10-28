@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_bottom_nav.dart';
 import 'service_catalog.dart';
+import 'github_auth_service.dart';
+import 'google_auth_service.dart';
 
 class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key});
@@ -47,6 +49,127 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   Future<void> _refreshServices() async {
     await _loadServices();
+  }
+
+  Future<void> _connectService(ServiceInfo service) async {
+    // Handle different service connections
+    if (service.name.toLowerCase() == 'github') {
+      await _connectGitHub();
+    } else if (service.name.toLowerCase() == 'google' || service.name.toLowerCase() == 'gmail') {
+      await _connectGoogle();
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Service connection not yet implemented for ${service.name}',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _connectGitHub() async {
+    try {
+      // Show loading dialog
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      final result = await GitHubAuthService.signInWithGitHub(context);
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      if (result['success'] && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('GitHub connected successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Refresh services to update connection status
+        await _refreshServices();
+      } else if (mounted && result['error'] != 'Authentication cancelled') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to connect GitHub: ${result['error']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error connecting GitHub: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _connectGoogle() async {
+    try {
+      // Show loading dialog
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      final result = await GoogleAuthService.signInWithGoogle();
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      if (result['success'] && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google connected successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Refresh services to update connection status
+        await _refreshServices();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to connect Google: ${result['error']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error connecting Google: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -207,15 +330,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                       trailing: service.connected
                                           ? const Icon(Icons.check_circle, color: Colors.green)
                                           : ElevatedButton(
-                                              onPressed: () {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      'Service connection not yet implemented for ${service.name}',
-                                                    ),
-                                                  ),
-                                                );
-                                              },
+                                              onPressed: () => _connectService(service),
                                               child: const Text('Connect'),
                                             ),
                                       isThreeLine: true,

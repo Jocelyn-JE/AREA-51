@@ -113,7 +113,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (result['success']) {
           // Registration successful
           final userID = result['data']['userID'];
-          print('✅ Registration successful! UserID: $userID');
+          debugPrint('[Register] ✅ Registration successful! UserID: $userID');
 
           // Show success dialog
           showDialog(
@@ -162,7 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
         } else {
           // Registration failed
-          print('❌ Registration failed: ${result['error']}');
+          debugPrint('[Register] ❌ Registration failed: ${result['error']}');
           
           String errorMessage = result['error'] ?? 'Registration failed';
           
@@ -210,7 +210,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       }
     } catch (error) {
-      print('💥 Registration error: $error');
+      debugPrint('[Register] 💥 Registration error: $error');
       
       if (mounted) {
         setState(() {

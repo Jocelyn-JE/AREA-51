@@ -74,13 +74,13 @@ class _LoginScreenState extends State<LoginScreen> {
         if (result['success']) {
           // Login successful
           final jwtToken = result['data']['token'];
-          print('✅ Login successful! JWT Token received');
+          debugPrint('[Login] ✅ Login successful! JWT Token received');
 
           // Navigate to dashboard screen
           Navigator.of(context).pushReplacementNamed('/dashboard');
         } else {
           // Login failed
-          print('❌ Login failed: ${result['error']}');
+          debugPrint('[Login] ❌ Login failed: ${result['error']}');
           
           String errorMessage = result['error'] ?? 'Login failed';
           
@@ -128,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } catch (error) {
-      print('💥 Login error: $error');
+      debugPrint('[Login] 💥 Login error: $error');
       
       if (mounted) {
         setState(() {
@@ -173,12 +173,12 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      print('🔄 Login Screen: Starting Google Sign-In...');
+      debugPrint('[Login] 🔄 Starting Google Sign-In...');
       final result = await GoogleAuthService.signInWithGoogle();
-      print('Login Screen: Google Sign-In completed with result: $result');
+      debugPrint('[Login] Google Sign-In completed with result: $result');
 
       if (result['success'] && mounted) {
-        print('✅ Login Screen: Sign-in and backend authentication successful!');
+        debugPrint('[Login] ✅ Sign-in and backend authentication successful!');
         // Get token information
         final tokenInfo = await GoogleAuthService.getTokenInfo();
 
@@ -189,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.of(context).pushReplacementNamed('/dashboard');
       } else if (result['user'] != null && mounted) {
         // Google sign-in successful but backend authentication failed
-        print('⚠️ Login Screen: Google sign-in successful but backend authentication failed');
+        debugPrint('[Login] ⚠️ Google sign-in successful but backend authentication failed');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Backend authentication failed: ${result['error']}'),
@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       } else if (mounted) {
-        print('❌ Login Screen: Sign-in failed: ${result['error']}');
+        debugPrint('[Login] ❌ Sign-in failed: ${result['error']}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Google Sign-In failed: ${result['error']}'),
@@ -208,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (error) {
-      print('💥 Login Screen Error: $error');
+      debugPrint('[Login] 💥 Google Sign-In Error: $error');
       if (mounted) {
         String errorMessage = 'Google Sign-In failed';
 

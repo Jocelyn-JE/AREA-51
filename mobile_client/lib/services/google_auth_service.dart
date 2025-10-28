@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'api_service.dart';
 
@@ -35,11 +36,11 @@ class GoogleAuthService {
       _idToken = googleUser.authentication.idToken;
       _currentUser = googleUser;
 
-      print('Google Sign-In Success!');
-      print('User: ${googleUser.displayName}');
-      print('Email: ${googleUser.email}');
-      print('ID: ${googleUser.id}');
-      print('ID Token: $_idToken');
+      debugPrint('[GoogleAuth] 🔑 Google Sign-In Success!');
+      debugPrint('[GoogleAuth] User: ${googleUser.displayName}');
+      debugPrint('[GoogleAuth] Email: ${googleUser.email}');
+      debugPrint('[GoogleAuth] ID: ${googleUser.id}');
+      debugPrint('[GoogleAuth] ID Token: $_idToken');
 
       // Send ID token to backend for authentication
       if (_idToken != null) {
@@ -48,8 +49,8 @@ class GoogleAuthService {
 
         if (result['success']) {
           _jwtToken = result['data']['token'];
-          print('Backend authentication successful!');
-          print('JWT Token received: $_jwtToken');
+          debugPrint('[GoogleAuth] ✅ Backend authentication successful!');
+          debugPrint('[GoogleAuth] JWT Token received: $_jwtToken');
           
           return {
             'success': true,
@@ -58,7 +59,7 @@ class GoogleAuthService {
             'message': result['data']['message'] ?? 'Login successful',
           };
         } else {
-          print('Backend authentication failed: ${result['error']}');
+          debugPrint('[GoogleAuth] ⚠️ Backend authentication failed: ${result['error']}');
           // Don't sign out from Google, but return error
           return {
             'success': false,
@@ -75,7 +76,7 @@ class GoogleAuthService {
         'error': 'No ID token received from Google',
       };
     } catch (error) {
-      print('Error signing in with Google: $error');
+      debugPrint('[GoogleAuth] 💥 Error signing in with Google: $error');
       _currentUser = null;
       _idToken = null;
       _jwtToken = null;
@@ -98,9 +99,9 @@ class GoogleAuthService {
       final apiService = ApiService();
       apiService.clearJwtToken();
       
-      print('Successfully signed out from Google and cleared all tokens');
+      debugPrint('[GoogleAuth] ✅ Successfully signed out from Google and cleared all tokens');
     } catch (error) {
-      print('Error signing out: $error');
+      debugPrint('[GoogleAuth] 💥 Error signing out: $error');
     }
   }
 
@@ -113,7 +114,7 @@ class GoogleAuthService {
   static Future<Map<String, String?>?> getUserProfile() async {
     try {
       if (_currentUser == null) {
-        print('No user is currently signed in');
+        debugPrint('[GoogleAuth] ⚠️ No user is currently signed in');
         return null;
       }
       return {
@@ -123,7 +124,7 @@ class GoogleAuthService {
         'photoUrl': _currentUser!.photoUrl,
       };
     } catch (error) {
-      print('Error getting user profile: $error');
+      debugPrint('[GoogleAuth] 💥 Error getting user profile: $error');
       return null;
     }
   }

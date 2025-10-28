@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'api_service.dart';
 import '../models/service_models.dart';
@@ -161,15 +162,15 @@ class ServiceCatalogManager {
         
         _lastFetch = DateTime.now();
         
-        print('✅ Fetched ${_cachedServices.length} services from backend');
+        debugPrint('[ServiceCatalog] ✅ Fetched ${_cachedServices.length} services from backend');
         return _cachedServices;
       } else {
-        print('❌ Failed to fetch services: ${result['error']}');
+        debugPrint('[ServiceCatalog] ❌ Failed to fetch services: ${result['error']}');
         // Return fallback services if API fails
         return _getFallbackServices();
       }
     } catch (e) {
-      print('💥 Error fetching services: $e');
+      debugPrint('[ServiceCatalog] 💥 Error fetching services: $e');
       // Return fallback services if there's an exception
       return _getFallbackServices();
     }
@@ -183,7 +184,7 @@ class ServiceCatalogManager {
 
   // No fallback services - if backend is unavailable, show empty list
   static List<ServiceInfo> _getFallbackServices() {
-    print('⚠️ Backend unavailable: Returning empty service list');
+    debugPrint('[ServiceCatalog] ⚠️ Backend unavailable: Returning empty service list');
     _cachedServices = [];
     _lastFetch = DateTime.now();
     return _cachedServices;
