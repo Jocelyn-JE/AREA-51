@@ -13,6 +13,7 @@ import googleAuthRouter from "./routes/google-auth.router";
 import areaRouter from "./routes/area.router";
 import githubAuthRouter from "./routes/github-auth.router";
 import usersRouter from "./routes/users.router";
+import microsoftAuthRouter from "./routes/microsoft-auth.router";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -40,6 +41,8 @@ app.use("/api/users", usersRouter);
 app.use("/api/auth/google", googleAuthRouter);
 // Github Auth route
 app.use("/api/auth/github", githubAuthRouter);
+// Microsoft Auth route
+app.use("/api/auth/microsoft", microsoftAuthRouter);
 // Area route
 app.use("/api/areas", areaRouter);
 
