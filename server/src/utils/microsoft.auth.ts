@@ -1,8 +1,7 @@
 export const MICROSOFT_CLIENT_ID = process.env.MICROSOFT_CLIENT_ID;
 export const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET;
 export const MICROSOFT_REDIRECT_URI = process.env.MICROSOFT_REDIRECT_URI;
-// Optional tenant id (defaults to "common" so both personal and work accounts can sign in)
-export const MICROSOFT_TENANT = process.env.MICROSOFT_TENANT || "common";
+export const MICROSOFT_TENANT = "common";
 
 type MicrosoftUser = {
     id: string;
@@ -67,7 +66,7 @@ export async function exchangeCodeForToken(code: string): Promise<string> {
         redirect_uri: MICROSOFT_REDIRECT_URI,
         grant_type: "authorization_code",
         ...(MICROSOFT_CLIENT_SECRET && {
-            client_secret: MICROSOFT_CLIENT_SECRET
+            client_secret: encodeURIComponent(MICROSOFT_CLIENT_SECRET)
         })
     });
 
