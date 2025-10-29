@@ -52,7 +52,7 @@ android {
         }
         getByName("debug") {
             // Use default debug keystore for debug builds
-            // signingConfig = signingConfigs.getByName("debug") // Use default
+            signingConfig = signingConfigs.getByName("release")
         }
         getByName("profile") {
             signingConfig = signingConfigs.getByName("release")
