@@ -22,17 +22,33 @@ class GitHubAuthService {
 
       // Get the authorization URL from backend
       final apiService = ApiService();
-      final authUrlResult = await apiService.getGithubAuthUrl();
-
-      if (!authUrlResult['success']) {
+      
+      // Check if user is authenticated
+      if (apiService.jwtToken == null) {
+        debugPrint('[GitHub] ❌ User is not authenticated. JWT token is missing.');
         return {
           'success': false,
-          'error': authUrlResult['error'] ?? 'Failed to get authorization URL',
+          'error': 'You must be logged in first to connect GitHub',
+        };
+      }
+      
+      debugPrint('[GitHub] 🔑 JWT Token exists, requesting auth URL...');
+      final authUrlResult = await apiService.getGithubAuthUrl();
+
+      debugPrint('[GitHub] 📦 Auth URL Result: ${authUrlResult.toString()}');
+      
+      if (!authUrlResult['success']) {
+        final errorMsg = authUrlResult['error'] ?? 'Failed to get authorization URL';
+        debugPrint('[GitHub] ❌ Failed to get auth URL: $errorMsg');
+        return {
+          'success': false,
+          'error': errorMsg,
         };
       }
 
       final authUrl = authUrlResult['data']['authUrl'] as String?;
-      if (authUrl == null) {
+      if (authUrl == null || authUrl.isEmpty) {
+        debugPrint('[GitHub] ❌ No authorization URL received from backend');
         return {
           'success': false,
           'error': 'No authorization URL received',
@@ -130,13 +146,24 @@ class _GitHubAuthWebViewState extends State<GitHubAuthWebView> {
   }
 
   void _initializeWebView() {
+    debugPrint('[GitHub] 🔧 Initializing WebView with URL: ${widget.authUrl}');
+    
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0xFFFFFFFF))
       ..setNavigationDelegate(
         NavigationDelegate(
+          onNavigationRequest: (NavigationRequest request) {
+            debugPrint('[GitHub] 🧭 Navigation request: ${request.url}');
+            _checkForCallback(request.url);
+            return NavigationDecision.navigate;
+          },
           onPageStarted: (String url) {
             debugPrint('[GitHub] 📄 Page started loading: $url');
-            _checkForCallback(url);
+            setState(() {
+              _isLoading = true;
+              _error = null;
+            });
           },
           onPageFinished: (String url) {
             debugPrint('[GitHub] ✅ Page finished loading: $url');
@@ -146,14 +173,35 @@ class _GitHubAuthWebViewState extends State<GitHubAuthWebView> {
           },
           onWebResourceError: (WebResourceError error) {
             debugPrint('[GitHub] 💥 WebView error: ${error.description}');
+            debugPrint('[GitHub] 💥 Error type: ${error.errorType}');
+            debugPrint('[GitHub] 💥 Error code: ${error.errorCode}');
             setState(() {
               _isLoading = false;
-              _error = error.description;
+              _error = 'Failed to load: ${error.description}';
+            });
+          },
+          onHttpError: (HttpResponseError error) {
+            debugPrint('[GitHub] 🚫 HTTP error: ${error.response?.statusCode}');
+            setState(() {
+              _isLoading = false;
+              _error = 'HTTP error: ${error.response?.statusCode}';
             });
           },
         ),
-      )
-      ..loadRequest(Uri.parse(widget.authUrl));
+      );
+      
+    // Load the URL
+    try {
+      final uri = Uri.parse(widget.authUrl);
+      debugPrint('[GitHub] 🌐 Loading URL: $uri');
+      _controller.loadRequest(uri);
+    } catch (e) {
+      debugPrint('[GitHub] 💥 Failed to parse/load URL: $e');
+      setState(() {
+        _error = 'Invalid URL: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   void _checkForCallback(String url) async {
@@ -205,13 +253,17 @@ class _GitHubAuthWebViewState extends State<GitHubAuthWebView> {
         title: const Text('Sign in with GitHub'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            debugPrint('[GitHub] 🚪 User closed WebView');
+            Navigator.of(context).pop();
+          },
         ),
       ),
       body: Stack(
         children: [
-          WebViewWidget(controller: _controller),
-          if (_isLoading)
+          if (_error == null)
+            WebViewWidget(controller: _controller),
+          if (_isLoading && _error == null)
             const Center(
               child: CircularProgressIndicator(),
             ),
