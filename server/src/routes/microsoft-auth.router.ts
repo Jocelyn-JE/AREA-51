@@ -101,9 +101,9 @@ router.post("/verify", async (req, res) => {
 const scopes = [
     "User.Read",
     "Mail.Read",
+    "Mail.Send",
     "Calendars.Read",
     "Files.ReadWrite"
-    // Add other scopes you need for your AREA services
 ];
 
 // GET /auth/microsoft/authorize - Initiate OAuth2 flow for service permissions
