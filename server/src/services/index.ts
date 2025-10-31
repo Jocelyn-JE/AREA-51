@@ -10,6 +10,7 @@ import { BaseService } from "./types";
 import { GmailService } from "./gmail";
 import { GoogleDriveService } from "./google-drive";
 import { GitHubService } from "./github";
+import { OutlookService } from "./outlook";
 
 export const serviceRegistry: Map<string, BaseService> = new Map<
 string,
@@ -17,7 +18,8 @@ BaseService
 >([
     ["Gmail", new GmailService()],
     ["Google Drive", new GoogleDriveService()],
-    ["GitHub", new GitHubService()]
+    ["GitHub", new GitHubService()],
+    ["Outlook", new OutlookService()]
 ]);
 
 // Helper function to get a service by name
