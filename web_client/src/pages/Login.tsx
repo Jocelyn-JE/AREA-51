@@ -1,31 +1,23 @@
 import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { Navigate } from "react-router-dom";
 import axios from "axios";
 
 function Login() {
-    const navigate = useNavigate();
-
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const { user, login } = useAuth();
+
+    if (user) {
+      return <Navigate to="/areas" />;
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-          const loginRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password }),
-          });
-
-          const loginData = await loginRes.json();
-          if (!loginRes.ok) {
-            throw new Error(loginData.error || "Auto-login failed");
-          }
-
-          localStorage.setItem("token", loginData.token);
-          navigate("/explore");
+          await login(username, password);
         } catch (err: any) {
           console.error("Login error:", err);
           setError(err.message || "Login failed. Please try again.");
@@ -85,7 +77,7 @@ function Login() {
                         })
                         .then(response => {
                             localStorage.setItem("token", response.data.token);
-                            navigate("/explore");
+                            window.location.href = "/explore";
                         }).catch(error => {
                             console.error("Google login error:", error);
                             setError("Google login failed");

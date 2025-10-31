@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 
 interface Service {
   name: string;
@@ -74,15 +73,15 @@ function Explore() {
       {/* Services list */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-6xl mt-6 center">
         {filteredServices.map((service, i) => (
-          <Link
+          <a
             key={i}
-            to={`/service/${service.name}`}
+            href={`/service/${service.name}`}
             className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition duration-200"
           >
             <h3 className="text-xl font-semibold text-blue-600 capitalize">
               {service.name}
             </h3>
-          </Link>
+          </a>
         ))}
       </div>
 
