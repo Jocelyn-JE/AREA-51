@@ -134,7 +134,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
         );
       }
 
-      final result = await GoogleAuthService.signInWithGoogle();
+      final result = await GoogleAuthService.authorizeGoogleServices(context);
 
       // Close loading dialog
       if (mounted) {
@@ -144,13 +144,13 @@ class _ServicesScreenState extends State<ServicesScreen> {
       if (result['success'] && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Google connected successfully!'),
+            content: Text('Google services connected successfully!'),
             backgroundColor: Colors.green,
           ),
         );
         // Refresh services to update connection status
         await _refreshServices();
-      } else if (mounted) {
+      } else if (mounted && result['error'] != 'Authentication cancelled') {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to connect Google: ${result['error']}'),
