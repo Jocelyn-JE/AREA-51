@@ -236,6 +236,7 @@ This project is licensed under the ISC License.
 - [GitHub Repository](https://github.com/Jocelyn-JE/AREA-51)
 - [Issue Tracker](https://github.com/Jocelyn-JE/AREA-51/issues)
 - [Service Documentation](./docs/services.md)
+- [How to contribute](./docs/howtocontribute.md)
 
 ---
 
