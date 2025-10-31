@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_client/screens/backend_config_screen.dart';
 
 class StartScreen extends StatelessWidget {
   const StartScreen({super.key});
@@ -6,13 +7,33 @@ class StartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('AREA'),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const BackendConfigScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.settings),
+            tooltip: 'Backend Settings',
+          ),
+        ],
+      ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Add some top spacing to center content when not scrolling
+              SizedBox(height: MediaQuery.of(context).size.height * 0.1),
               // Logo/Icon
               const Icon(
                 Icons.auto_awesome,
@@ -89,6 +110,24 @@ class StartScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 16),
                 ),
               ),
+              const SizedBox(height: 16),
+
+              // Backend Configuration Button
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const BackendConfigScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.settings_ethernet, size: 20),
+                label: const Text('Backend Configuration'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.deepPurple,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                ),
+              ),
               const SizedBox(height: 32),
               
               // Features
@@ -110,6 +149,8 @@ class StartScreen extends StatelessWidget {
                   _buildFeature(Icons.notifications, 'Get\nNotified'),
                 ],
               ),
+              // Add some bottom spacing
+              SizedBox(height: MediaQuery.of(context).size.height * 0.1),
             ],
           ),
         ),

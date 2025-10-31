@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_client/services/google_auth_service.dart';
+import 'package:mobile_client/services/backend_config_service.dart';
 import 'screens/start_screen.dart';
+import 'screens/backend_config_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -11,8 +14,12 @@ import 'screens/confirm_naming_screen.dart';
 import 'screens/my_areas_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'screens/token_display_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  GoogleAuthService.initialize();
+  await BackendConfigService.initialize();
   runApp(const MyApp());
 }
 
@@ -41,6 +48,8 @@ class MyApp extends StatelessWidget {
         '/my-areas': (context) => const MyAreasScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/notifications': (context) => const NotificationsScreen(),
+        '/token-display': (context) => const TokenDisplayScreen(),
+        '/backend-config': (context) => const BackendConfigScreen(),
       },
       debugShowCheckedModeBanner: false,
     );

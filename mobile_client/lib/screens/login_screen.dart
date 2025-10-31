@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/google_auth_service.dart';
+import '../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,8 +13,15 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final ApiService _apiService = ApiService();
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Debug method removed because GoogleAuthService.printDebugInfo() does not exist
+  }
 
   @override
   void dispose() {
@@ -42,31 +51,270 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+    setState(() {
+      _isLoading = true;
+    });
 
-      // For POC purposes, accept any valid email/password combination
+    try {
+      // Use backend API to login
+      final result = await _apiService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
 
-        // Navigate to dashboard screen
-        Navigator.of(context).pushReplacementNamed('/dashboard');
+        if (result['success']) {
+          // Login successful
+          final jwtToken = result['data']['token'];
+          debugPrint('[Login] ✅ Login successful! JWT Token received');
+
+          // Navigate to dashboard screen
+          Navigator.of(context).pushReplacementNamed('/dashboard');
+        } else {
+          // Login failed
+          debugPrint('[Login] ❌ Login failed: ${result['error']}');
+          
+          String errorMessage = result['error'] ?? 'Login failed';
+          
+          // Handle specific error cases
+          if (result['statusCode'] == 401) {
+            errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+          } else if (result['statusCode'] == 400) {
+            errorMessage = 'Please provide valid email and password.';
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Login Failed',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(errorMessage),
+                  if (result['statusCode'] == 401) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Don\'t have an account? Try registering first.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ],
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+              action: result['statusCode'] == 401 
+                  ? SnackBarAction(
+                      label: 'Register',
+                      textColor: Colors.white,
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/register');
+                      },
+                    )
+                  : null,
+            ),
+          );
+        }
+      }
+    } catch (error) {
+      debugPrint('[Login] 💥 Login error: $error');
+      
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Connection Error',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                const Text('Unable to connect to the server.'),
+                const SizedBox(height: 4),
+                Text(
+                  'Error: ${error.toString()}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _handleLogin,
+            ),
+          ),
+        );
       }
     }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      debugPrint('[Login] 🔄 Starting Google Sign-In...');
+      final result = await GoogleAuthService.signInWithGoogle();
+      debugPrint('[Login] Google Sign-In completed with result: $result');
+
+      if (result['success'] && mounted) {
+        debugPrint('[Login] ✅ Sign-in and backend authentication successful!');
+        // Get token information
+        final tokenInfo = await GoogleAuthService.getTokenInfo();
+
+        // Show token dialog before navigating
+        await _showTokenDialog(tokenInfo);
+
+        // Navigate to dashboard screen
+        Navigator.of(context).pushReplacementNamed('/dashboard');
+      } else if (result['user'] != null && mounted) {
+        // Google sign-in successful but backend authentication failed
+        debugPrint('[Login] ⚠️ Google sign-in successful but backend authentication failed');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backend authentication failed: ${result['error']}'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      } else if (mounted) {
+        debugPrint('[Login] ❌ Sign-in failed: ${result['error']}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google Sign-In failed: ${result['error']}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (error) {
+      debugPrint('[Login] 💥 Google Sign-In Error: $error');
+      if (mounted) {
+        String errorMessage = 'Google Sign-In failed';
+
+        if (error.toString().contains('10:')) {
+          errorMessage =
+              'OAuth not configured. Check Google Cloud Console setup.';
+        } else if (error.toString().contains('12501:')) {
+          errorMessage = 'Please sign in to your Google account first.';
+        } else if (error.toString().contains('7:')) {
+          errorMessage = 'Network error. Check your internet connection.';
+        } else {
+          errorMessage = 'Google Sign-In failed: ${error.toString()}';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(errorMessage),
+                const SizedBox(height: 4),
+                Text(
+                  'Check console logs for detailed error info',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showTokenDialog(Map<String, dynamic> tokenInfo) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('OAuth Token Information'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 16),
+                const Text(
+                  'ID Token:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                SelectableText(
+                  tokenInfo['idToken'] ?? 'No ID token',
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'JWT Token:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                SelectableText(
+                  tokenInfo['jwtToken'] ?? 'No JWT token',
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'User Information:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                if (tokenInfo['user'] != null) ...[
+                  Text('Email: ${tokenInfo['user']['email']}'),
+                  Text('Name: ${tokenInfo['user']['displayName']}'),
+                  Text('ID: ${tokenInfo['user']['id']}'),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
@@ -75,11 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Logo/Title
-                const Icon(
-                  Icons.login,
-                  size: 80,
-                  color: Colors.deepPurple,
-                ),
+                const Icon(Icons.login, size: 80, color: Colors.deepPurple),
                 const SizedBox(height: 32),
                 const Text(
                   'Welcome Back!',
@@ -94,10 +338,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Text(
                   'Sign in to continue',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 48),
 
@@ -126,7 +367,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
                       onPressed: () {
                         setState(() {
@@ -154,12 +397,57 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
+                            color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Login',
-                          style: TextStyle(fontSize: 16),
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.login, size: 18),
+                            SizedBox(width: 8),
+                            Text('Login', style: TextStyle(fontSize: 16)),
+                          ],
                         ),
+                ),
+                const SizedBox(height: 16),
+
+                // Divider
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Google Sign-In Button
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _handleGoogleSignIn,
+                  icon: Image.network(
+                    'https://developers.google.com/identity/images/g-logo.png',
+                    height: 20,
+                    width: 20,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.account_circle, size: 20),
+                  ),
+                  label: const Text('Continue with Google'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    side: BorderSide(color: Colors.grey.shade300),
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -187,38 +475,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text('Register'),
                     ),
                   ],
-                ),
-                const SizedBox(height: 16),
-
-                // Demo Credentials
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Column(
-                    children: [
-                      Text(
-                        'Demo Credentials',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.deepPurple,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text('Email: test@example.com'),
-                      Text('Password: 123456'),
-                      SizedBox(height: 4),
-                      Text(
-                        '(Any valid email/password will work)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),

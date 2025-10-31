@@ -10,7 +10,7 @@ class NewAreaScreen extends StatelessWidget {
         title: const Text('Create New Area'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -70,73 +70,43 @@ class NewAreaScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Popular Templates',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.shade200),
               ),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView(
+              child: Column(
                 children: [
-                  _buildTemplateCard(
-                    context,
-                    'GitHub to Discord',
-                    'Send Discord message when GitHub issue is created',
-                    Icons.code,
-                    Icons.chat,
+                  Icon(
+                    Icons.construction,
+                    size: 48,
+                    color: Colors.blue.shade600,
                   ),
-                  _buildTemplateCard(
-                    context,
-                    'Email to Spotify',
-                    'Add song to playlist when receiving specific email',
-                    Icons.email,
-                    Icons.music_note,
+                  const SizedBox(height: 12),
+                  Text(
+                    'Area Creation',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue.shade800,
+                    ),
                   ),
-                  _buildTemplateCard(
-                    context,
-                    'Weather Alert',
-                    'Send notification when weather conditions change',
-                    Icons.cloud,
-                    Icons.notifications,
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Area creation will use real services from the backend API. Templates and automation creation will be implemented based on available services.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
                   ),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTemplateCard(
-    BuildContext context,
-    String title,
-    String description,
-    IconData triggerIcon,
-    IconData actionIcon,
-  ) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(triggerIcon, color: Colors.blue),
-            const SizedBox(width: 4),
-            const Icon(Icons.arrow_forward, size: 16),
-            const SizedBox(width: 4),
-            Icon(actionIcon, color: Colors.green),
-          ],
-        ),
-        title: Text(title),
-        subtitle: Text(description),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          Navigator.pushNamed(context, '/choose-action');
-        },
       ),
     );
   }
