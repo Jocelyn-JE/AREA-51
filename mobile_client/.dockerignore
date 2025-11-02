@@ -1,0 +1,28 @@
+# Build outputs
+build/
+.dart_tool/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Git
+.git/
+.gitignore
+
+# iOS (not needed for Android build)
+ios/
+
+# Documentation
+README.md
+
+# Test files
+test/
+
+# Gradle cache
+.gradle/
+android/.gradle/
+
+# Local properties
+android/local.properties
