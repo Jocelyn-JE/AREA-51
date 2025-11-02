@@ -3,6 +3,7 @@ import '../widgets/app_bottom_nav.dart';
 import 'service_catalog.dart';
 import 'github_auth_service.dart';
 import 'google_auth_service.dart';
+import 'microsoft_auth_service.dart';
 
 class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key});
@@ -57,6 +58,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
       await _connectGitHub();
     } else if (service.name.toLowerCase() == 'google' || service.name.toLowerCase() == 'gmail') {
       await _connectGoogle();
+    } else if (service.name.toLowerCase() == 'microsoft' || service.name.toLowerCase() == 'outlook') {
+      await _connectMicrosoft();
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -165,6 +168,57 @@ class _ServicesScreenState extends State<ServicesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error connecting Google: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _connectMicrosoft() async {
+    try {
+      // Show loading dialog
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      final result = await MicrosoftAuthService.authorizeMicrosoftServices(context);
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      if (result['success'] && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Microsoft services connected successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Refresh services to update connection status
+        await _refreshServices();
+      } else if (mounted && result['error'] != 'Authentication cancelled') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to connect Microsoft: ${result['error']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error connecting Microsoft: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );

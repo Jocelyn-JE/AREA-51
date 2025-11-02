@@ -289,6 +289,60 @@ class ApiService {
   }
 
   // ============================================================================
+  // MICROSOFT OAUTH ENDPOINTS
+  // ============================================================================
+
+  /// POST /api/auth/microsoft/verify
+  /// Verify Microsoft token and authenticate user
+  Future<Map<String, dynamic>> verifyMicrosoftToken(String accessToken) async {
+    try {
+      final url = BackendConfigService.getApiUrl('/api/auth/microsoft/verify');
+      final response = await http.post(
+        Uri.parse(url),
+        headers: _getHeaders(),
+        body: json.encode({
+          'token': accessToken,
+        }),
+      );
+
+      final result = _handleResponse(response);
+      
+      // If successful, store the JWT token
+      if (result['success'] && result['data']['token'] != null) {
+        _jwtToken = result['data']['token'];
+      }
+
+      return result;
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+        'statusCode': 0,
+      };
+    }
+  }
+
+  /// GET /api/auth/microsoft/authorize
+  /// Get Microsoft OAuth authorization URL
+  Future<Map<String, dynamic>> getMicrosoftAuthUrl() async {
+    try {
+      final url = BackendConfigService.getApiUrl('/api/auth/microsoft/authorize');
+      final response = await http.get(
+        Uri.parse(url),
+        headers: _getHeaders(requiresAuth: true),
+      );
+
+      return _handleResponse(response);
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+        'statusCode': 0,
+      };
+    }
+  }
+
+  // ============================================================================
   // AREA MANAGEMENT ENDPOINTS
   // ============================================================================
 
