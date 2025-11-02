@@ -12,7 +12,7 @@ RUN flutter pub get
 # Build APK
 RUN flutter build apk --debug
 
-# Create shared directory and copy APK
-RUN mkdir -p /shared && \
-    cp build/app/outputs/flutter-apk/app-debug.apk /shared/client.apk && \
-    echo "✓ APK built and copied to /shared/client.apk"
+# Create directory and copy APK for later use
+RUN mkdir -p /app/shared && \
+    cp build/app/outputs/flutter-apk/app-debug.apk /app/shared/client.apk && \
+    echo "✓ APK built and ready at /app/shared/client.apk"

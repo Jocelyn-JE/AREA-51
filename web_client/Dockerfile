@@ -14,7 +14,19 @@ RUN npm run build
 
 FROM nginx:alpine
 
+# Copy built files
 COPY --from=build /app/dist/ /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Create shared directory for APK
+RUN mkdir -p /shared
+
 EXPOSE 80
+
+# Wait for APK from mobile client, then start nginx
+CMD sh -c '\
+  echo "Waiting for /shared/client_mobile.txt..." && \
+  while [ ! -f /shared/client_mobile.txt ]; do sleep 1; done && \
+  echo "Mobile client completed. APK available at /shared/client.apk" && \
+  nginx -g "daemon off;"\
+'

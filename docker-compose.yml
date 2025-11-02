@@ -15,6 +15,20 @@ services:
     depends_on:
       - mongo-db
     restart: always
+  client_mobile:
+    container_name: client_mobile
+    build:
+      context: ./mobile_client
+    working_dir: /app
+    volumes:
+      - shared-client:/shared
+    networks:
+      - frontend
+    command: >
+      sh -c "
+      cp -r /app/shared/client.apk /shared/client.apk &&
+      echo 'Build completed' > /shared/client_mobile.txt
+      "
   client_web:
     container_name: web-client
     build:
@@ -26,14 +40,11 @@ services:
     restart: always
     networks:
       - frontend
+    volumes:
+      - shared-client:/shared
     depends_on:
+      - client_mobile
       - server
-  client_mobile:
-    container_name: mobile-client
-    build:
-      context: ./mobile_client
-    networks:
-      - frontend
   mongo-db:
     image: mongo
     container_name: mongo-db
@@ -64,3 +75,4 @@ networks:
 
 volumes:
   db-data:
+  shared-client:
